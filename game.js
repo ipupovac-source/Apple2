@@ -370,7 +370,6 @@
   let snake = [];         // array of {x,y} — head is snake[0]
   let direction = DIR.RIGHT;
   let nextDirection = DIR.RIGHT;
-  let foodPos = null;
   let score = 0;
   let hiScore = 0;
   let gameState = STATE_INTRO;
@@ -427,17 +426,18 @@
     }
   }
 
-  function spawnFood() {
-    let attempts = 0;
-    while (attempts < 1000) {
-      const x = PLAY_LEFT + Math.floor(Math.random() * (PLAY_RIGHT - PLAY_LEFT + 1));
-      const y = PLAY_TOP + Math.floor(Math.random() * (PLAY_BOTTOM - PLAY_TOP + 1));
-      if (grid[y][x] === CELL_EMPTY) {
-        foodPos = { x, y };
-        grid[y][x] = CELL_FOOD;
-        return;
+  function spawnAllFood(count) {
+    for (let n = 0; n < count; n++) {
+      let attempts = 0;
+      while (attempts < 1000) {
+        const x = PLAY_LEFT + Math.floor(Math.random() * (PLAY_RIGHT - PLAY_LEFT + 1));
+        const y = PLAY_TOP + Math.floor(Math.random() * (PLAY_BOTTOM - PLAY_TOP + 1));
+        if (grid[y][x] === CELL_EMPTY) {
+          grid[y][x] = CELL_FOOD;
+          break;
+        }
+        attempts++;
       }
-      attempts++;
     }
   }
 
@@ -450,7 +450,7 @@
     tickInterval = 150;
     initGrid();
     initSnake();
-    spawnFood();
+    spawnAllFood(foodTarget);
     gameState = STATE_PLAYING;
     deathFlashTimer = 0;
   }
@@ -500,8 +500,6 @@
         foodTarget = 5 + (level - 1) * 3;
         gameState = STATE_LEVELUP;
         levelUpTimer = 120;
-      } else {
-        spawnFood();
       }
     } else {
       // Remove tail
@@ -1192,7 +1190,9 @@
         drawTextCentered("GET READY!", 14, DIM_GREEN);
       }
       if (levelUpTimer <= 0) {
-        spawnFood();
+        initGrid();
+        initSnake();
+        spawnAllFood(foodTarget);
         gameState = STATE_PLAYING;
       }
     } else if (gameState === STATE_DYING) {
@@ -1208,7 +1208,7 @@
       if (dyingTimer <= 0) {
         initGrid();
         initSnake();
-        spawnFood();
+        spawnAllFood(foodTarget - foodEaten);
         gameState = STATE_PLAYING;
         deathFlashTimer = 0;
       }
