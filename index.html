@@ -143,18 +143,57 @@
     border: 1px solid #444;
   }
 
+  /* ── Animated spotlight from bottom-right ── */
+  #spotlight {
+    display: none;
+    position: fixed;
+    bottom: -60px;
+    right: 40px;
+    width: 0;
+    height: 0;
+    z-index: 0;
+  }
+
+  #spotlight::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 120px;
+    height: 110vh;
+    transform-origin: bottom center;
+    background: linear-gradient(
+      to top,
+      rgba(255,255,255,0.07) 0%,
+      rgba(255,255,255,0.03) 30%,
+      transparent 100%
+    );
+    clip-path: polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%);
+    animation: sweep 6s ease-in-out infinite;
+  }
+
+  @keyframes sweep {
+    0%   { transform: translateX(-50%) rotate(-40deg); }
+    50%  { transform: translateX(-50%) rotate(30deg); }
+    100% { transform: translateX(-50%) rotate(-40deg); }
+  }
+
   /* Responsive scaling for mobile */
   @media (max-width: 900px) {
+    body {
+      justify-content: flex-start;
+      padding-top: 8px;
+    }
     #monitor {
-      padding: 12px 14px 32px 14px;
+      padding: 10px 10px 26px 10px;
       border-radius: 14px;
     }
     #monitor::after {
-      bottom: 8px;
-      font-size: 11px;
+      bottom: 6px;
+      font-size: 10px;
     }
     #screen-wrap {
-      padding: 6px;
+      padding: 4px;
       border-radius: 8px;
     }
     #game-canvas {
@@ -163,11 +202,17 @@
     }
     #dpad {
       display: grid;
+      margin-top: 10px;
+    }
+    #spotlight {
+      display: block;
     }
   }
 </style>
 </head>
 <body>
+
+<div id="spotlight"></div>
 
 <div id="monitor">
   <div id="screen-wrap">
