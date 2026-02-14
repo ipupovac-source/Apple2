@@ -49,6 +49,7 @@
   const STATE_PLAYING  = 1;
   const STATE_GAMEOVER = 2;
   const STATE_PAUSED   = 3;
+  const STATE_DYING    = 5;
 
   // ── Backend cell types (character grid) ──
   const CELL_EMPTY = 0;
@@ -181,6 +182,17 @@
       0b0000000,
       0b0000000,
     ],
+    // Heart / life icon
+    life: [
+      0b0000000,
+      0b0110110,
+      0b1111111,
+      0b1111111,
+      0b0111110,
+      0b0011100,
+      0b0001000,
+      0b0000000,
+    ],
   };
 
   // ── Apple II-style bitmap font (subset for our needs) ──
@@ -262,6 +274,8 @@
   let lastTick = 0;
   let animFrame = 0;      // for blinking cursor / animations
   let deathFlashTimer = 0;
+  let lives = 3;
+  let dyingTimer = 0;
 
   // Playfield boundaries (inside the wall border)
   // Row 0: title bar, Row 1: top wall, Row 22: bottom wall, Row 23: status bar
@@ -321,6 +335,7 @@
 
   function startGame() {
     score = 0;
+    lives = 3;
     tickInterval = 150;
     initGrid();
     initSnake();
@@ -340,9 +355,15 @@
     const targetCell = grid[ny][nx];
     if (targetCell === CELL_WALL || targetCell === CELL_SNAKE) {
       // Death!
-      gameState = STATE_GAMEOVER;
+      lives--;
       deathFlashTimer = 12;
-      if (score > hiScore) hiScore = score;
+      if (lives <= 0) {
+        gameState = STATE_GAMEOVER;
+        if (score > hiScore) hiScore = score;
+      } else {
+        gameState = STATE_DYING;
+        dyingTimer = 60;
+      }
       return;
     }
 
@@ -473,6 +494,10 @@
     ctx.fillStyle = "#001800";
     ctx.fillRect(0, 23 * PX_H, CANVAS_W, PX_H);
     drawText("HI:" + String(hiScore).padStart(5, "0"), 1, 23, DIM_GREEN);
+    // Lives display (heart icons)
+    for (let i = 0; i < lives; i++) {
+      drawBitmap(BITMAPS.life, COLS - 3 - i, 23, PALETTE.RED);
+    }
 
     if (gameState === STATE_PAUSED) {
       drawTextCentered("PAUSED", 23, PALETTE.YELLOW);
@@ -483,6 +508,11 @@
   function renderIntro() {
     clearScreen();
     introTimer++;
+
+    // Start intro music (works after first user interaction unlocks audio)
+    if (!introMusicStarted) {
+      playIntroMusic();
+    }
 
     // --- Searchlight beams (behind the monument) ---
     // Source point: bottom-right area
@@ -580,6 +610,7 @@
 
     // Auto-advance after ~6 seconds
     if (introTimer > 360) {
+      stopIntroMusic();
       gameState = STATE_TITLE;
       introTimer = 0;
     }
@@ -691,6 +722,87 @@
   }
 
   // ============================================================
+  //  AUDIO — Apple II style single-channel square wave
+  //  "Forever Young" (Alphaville) refrain, digitized from vinyl
+  //  Single speaker, one channel — authentic Apple II sound
+  // ============================================================
+  let audioCtx = null;
+  let introMusicNodes = [];
+  let introMusicStarted = false;
+
+  // Melody constants
+  const MELODY_BPM = 108;
+  const BEAT_MS = 60000 / MELODY_BPM;
+  const N8  = BEAT_MS / 2;       // eighth note  ~278ms
+  const NQ  = BEAT_MS;           // quarter note  ~556ms
+  const NDQ = BEAT_MS * 1.5;     // dotted quarter ~834ms
+  const NH  = BEAT_MS * 2;       // half note     ~1111ms
+
+  // Note frequencies (key of D major)
+  const _D4 = 293.66, _E4 = 329.63, _Fs4 = 369.99;
+  const _G4 = 392.00, _A4 = 440.00, _R = 0;
+
+  // "Forever young, I want to be forever young
+  //  Do you really want to live forever, forever, forever young"
+  const INTRO_MELODY = [
+    // "For-ev-er young"
+    [_D4,N8],[_D4,N8],[_E4,N8],[_Fs4,NDQ],
+    // "I want to be"
+    [_Fs4,N8],[_E4,N8],[_D4,N8],[_E4,N8],
+    // "for-ev-er young"
+    [_D4,N8],[_D4,N8],[_E4,N8],[_Fs4,NDQ],[_R,N8],
+    // "Do you real-ly"
+    [_A4,N8],[_A4,N8],[_G4,N8],[_Fs4,N8],
+    // "want to live"
+    [_E4,N8],[_D4,N8],[_E4,NQ],
+    // "for-ev-er"
+    [_Fs4,N8],[_Fs4,N8],[_E4,NQ],
+    // "for-ev-er"
+    [_D4,N8],[_E4,N8],[_Fs4,NQ],
+    // "for-ev-er young"
+    [_D4,N8],[_D4,N8],[_E4,N8],[_Fs4,NH],
+  ];
+
+  function playIntroMusic() {
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      stopIntroMusic();
+      introMusicStarted = true;
+      let time = audioCtx.currentTime + 0.1;
+      const gap = 0.015; // tiny click gap between notes (Apple II feel)
+      for (const [freq, dur] of INTRO_MELODY) {
+        const durSec = dur / 1000;
+        if (freq > 0) {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "square";
+          osc.frequency.value = freq;
+          gain.gain.value = 0.06;
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(time);
+          osc.stop(time + durSec - gap);
+          introMusicNodes.push(osc);
+        }
+        time += durSec;
+      }
+    } catch (e) {
+      // Audio not available — silently skip
+    }
+  }
+
+  function stopIntroMusic() {
+    for (const osc of introMusicNodes) {
+      try { osc.stop(); } catch (e) {}
+    }
+    introMusicNodes = [];
+    introMusicStarted = false;
+  }
+
+  // ============================================================
   //  INPUT HANDLING
   // ============================================================
   const keyMap = {
@@ -707,13 +819,21 @@
       e.preventDefault();
     }
 
+    // Unlock audio on user interaction
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+
     if (gameState === STATE_INTRO) {
-      if (e.key === " ") { gameState = STATE_TITLE; introTimer = 0; }
+      if (e.key === " ") { stopIntroMusic(); gameState = STATE_TITLE; introTimer = 0; }
       return;
     }
 
-    if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
+    if (gameState === STATE_TITLE) {
       if (e.key === " ") startGame();
+      return;
+    }
+
+    if (gameState === STATE_GAMEOVER) {
+      if (e.key === " ") { gameState = STATE_INTRO; introTimer = 0; }
       return;
     }
 
@@ -777,12 +897,18 @@
     // Don't handle D-pad button touches here
     if (e.target.classList && e.target.classList.contains("dpad-btn")) return;
 
+    // Unlock audio on user interaction
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+
     if (gameState === STATE_INTRO) {
       e.preventDefault();
-      gameState = STATE_TITLE; introTimer = 0;
-    } else if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
+      stopIntroMusic(); gameState = STATE_TITLE; introTimer = 0;
+    } else if (gameState === STATE_TITLE) {
       e.preventDefault();
       startGame();
+    } else if (gameState === STATE_GAMEOVER) {
+      e.preventDefault();
+      gameState = STATE_INTRO; introTimer = 0;
     } else if (gameState === STATE_PLAYING) {
       // Only pause if tapping canvas area (not D-pad)
       if (e.target === canvas) {
@@ -809,8 +935,10 @@
         if (!el) return;
         el.addEventListener("touchstart", function (e) {
           e.preventDefault();
-          if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
+          if (gameState === STATE_TITLE) {
             startGame();
+          } else if (gameState === STATE_GAMEOVER) {
+            gameState = STATE_INTRO; introTimer = 0;
           } else if (gameState === STATE_PLAYING) {
             handleDirection(dir);
           }
@@ -848,6 +976,23 @@
         if (animFrame % 4 === 0) deathFlashTimer--;
       }
       renderGameOver();
+    } else if (gameState === STATE_DYING) {
+      if (deathFlashTimer > 0) {
+        if (animFrame % 4 === 0) deathFlashTimer--;
+      }
+      dyingTimer--;
+      renderGame();
+      // Overlay: show lives remaining
+      ctx.fillStyle = "rgba(0,0,0,0.7)";
+      ctx.fillRect(8 * PX_W, 10 * PX_H, 24 * PX_W, 3 * PX_H);
+      drawTextCentered("LIVES: " + lives, 11, PALETTE.YELLOW);
+      if (dyingTimer <= 0) {
+        initGrid();
+        initSnake();
+        spawnFood();
+        gameState = STATE_PLAYING;
+        deathFlashTimer = 0;
+      }
     } else if (gameState === STATE_PAUSED) {
       renderGame();
     }
