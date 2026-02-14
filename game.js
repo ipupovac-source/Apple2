@@ -639,39 +639,23 @@
 
     // --- Searchlight beams (behind the monument) ---
     // Source point: bottom-right area
-    var srcX = 32 * PX_W;
-    var srcY = 22 * PX_H;
     // Sweep angle: oscillate slowly
     var baseAngle = -Math.PI / 2; // straight up
     var sweep = Math.sin(introTimer * 0.012) * 0.6;
-    var NUM_BEAMS = 5;
-    var beamSpread = 0.08;
 
-    // Draw beams as filled grid cells (Apple II style, pixelated)
+    // Draw right beam as filled grid cells (Apple II style, pixelated)
     var coneHalf = 0.25;
     var srcCol1 = 32, srcRow = 22;
-    var srcCol2 = 8;
-    var sweep2 = Math.sin(introTimer * 0.015 + 1.5) * 0.5;
     var beamColor = "#004400";
     for (var r = 0; r < ROWS; r++) {
       for (var c = 0; c < COLS; c++) {
-        // Check if cell center is inside either beam cone
         var cellCx = c + 0.5;
         var cellCy = r + 0.5;
-        var inBeam = false;
-        // Right beam
         var dx1 = cellCx - srcCol1, dy1 = cellCy - srcRow;
         var a1 = Math.atan2(dy1, dx1);
         var center1 = baseAngle + sweep;
         var diff1 = Math.atan2(Math.sin(a1 - center1), Math.cos(a1 - center1));
-        if (Math.abs(diff1) < coneHalf && dy1 < 0) inBeam = true;
-        // Left beam
-        var dx2 = cellCx - srcCol2, dy2 = cellCy - srcRow;
-        var a2 = Math.atan2(dy2, dx2);
-        var center2 = baseAngle + sweep2;
-        var diff2 = Math.atan2(Math.sin(a2 - center2), Math.cos(a2 - center2));
-        if (Math.abs(diff2) < coneHalf && dy2 < 0) inBeam = true;
-        if (inBeam) {
+        if (Math.abs(diff1) < coneHalf && dy1 < 0) {
           drawBitmap(BITMAPS.wall, c, r, beamColor);
         }
       }
@@ -719,12 +703,6 @@
       drawTextCentered("TAP OR PRESS SPACE", 23, "#005500");
     }
 
-    // Auto-advance after ~6 seconds
-    if (introTimer > 360) {
-      stopIntroMusic();
-      gameState = STATE_TITLE;
-      introTimer = 0;
-    }
   }
 
   // Draw text with 2×2 scaled characters (big logo text)
