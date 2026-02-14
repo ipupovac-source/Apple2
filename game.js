@@ -647,39 +647,35 @@
     var NUM_BEAMS = 5;
     var beamSpread = 0.08;
 
-    ctx.save();
-    // Right searchlight — wide filled cone
-    var coneHalf = 0.22; // half-angle of the full cone
-    var angle1r = baseAngle + sweep - coneHalf;
-    var angle2r = baseAngle + sweep + coneHalf;
-    var beamLen = CANVAS_H * 1.3;
-    var grad = ctx.createRadialGradient(srcX, srcY, 0, srcX, srcY, beamLen);
-    grad.addColorStop(0, "rgba(0,255,0,0.18)");
-    grad.addColorStop(1, "rgba(0,255,0,0)");
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.moveTo(srcX, srcY);
-    ctx.lineTo(srcX + Math.cos(angle1r) * beamLen, srcY + Math.sin(angle1r) * beamLen);
-    ctx.arc(srcX, srcY, beamLen, angle1r, angle2r);
-    ctx.closePath();
-    ctx.fill();
-
-    // Second searchlight from left — wide filled cone
-    var srcX2 = 8 * PX_W;
+    // Draw beams as filled grid cells (Apple II style, pixelated)
+    var coneHalf = 0.25;
+    var srcCol1 = 32, srcRow = 22;
+    var srcCol2 = 8;
     var sweep2 = Math.sin(introTimer * 0.015 + 1.5) * 0.5;
-    var angle1l = baseAngle + sweep2 - coneHalf;
-    var angle2l = baseAngle + sweep2 + coneHalf;
-    var grad2 = ctx.createRadialGradient(srcX2, srcY, 0, srcX2, srcY, beamLen);
-    grad2.addColorStop(0, "rgba(0,255,0,0.18)");
-    grad2.addColorStop(1, "rgba(0,255,0,0)");
-    ctx.fillStyle = grad2;
-    ctx.beginPath();
-    ctx.moveTo(srcX2, srcY);
-    ctx.lineTo(srcX2 + Math.cos(angle1l) * beamLen, srcY + Math.sin(angle1l) * beamLen);
-    ctx.arc(srcX2, srcY, beamLen, angle1l, angle2l);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+    var beamColor = "#004400";
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        // Check if cell center is inside either beam cone
+        var cellCx = c + 0.5;
+        var cellCy = r + 0.5;
+        var inBeam = false;
+        // Right beam
+        var dx1 = cellCx - srcCol1, dy1 = cellCy - srcRow;
+        var a1 = Math.atan2(dy1, dx1);
+        var center1 = baseAngle + sweep;
+        var diff1 = Math.atan2(Math.sin(a1 - center1), Math.cos(a1 - center1));
+        if (Math.abs(diff1) < coneHalf && dy1 < 0) inBeam = true;
+        // Left beam
+        var dx2 = cellCx - srcCol2, dy2 = cellCy - srcRow;
+        var a2 = Math.atan2(dy2, dx2);
+        var center2 = baseAngle + sweep2;
+        var diff2 = Math.atan2(Math.sin(a2 - center2), Math.cos(a2 - center2));
+        if (Math.abs(diff2) < coneHalf && dy2 < 0) inBeam = true;
+        if (inBeam) {
+          drawBitmap(BITMAPS.wall, c, r, beamColor);
+        }
+      }
+    }
 
     // --- Monument / pedestal structure ---
     // Base platform
