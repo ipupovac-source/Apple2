@@ -50,6 +50,7 @@
   const STATE_GAMEOVER = 2;
   const STATE_PAUSED   = 3;
   const STATE_DYING    = 5;
+  const STATE_LEVELUP  = 6;
 
   // ── Backend cell types (character grid) ──
   const CELL_EMPTY = 0;
@@ -193,7 +194,112 @@
       0b0001000,
       0b0000000,
     ],
+    // ── Food varieties for level system (7×8 bitmaps) ──
+    cherry: [
+      0b0010000,
+      0b0011000,
+      0b0100100,
+      0b1110111,
+      0b1110111,
+      0b0110110,
+      0b0000000,
+      0b0000000,
+    ],
+    cookie: [
+      0b0000000,
+      0b0111110,
+      0b1101011,
+      0b1111111,
+      0b1011101,
+      0b1111111,
+      0b0111110,
+      0b0000000,
+    ],
+    banana: [
+      0b0000010,
+      0b0000110,
+      0b0001110,
+      0b0011110,
+      0b0111110,
+      0b0111100,
+      0b0111000,
+      0b0010000,
+    ],
+    sandwich: [
+      0b0111110,
+      0b1111111,
+      0b1010101,
+      0b1111111,
+      0b1111111,
+      0b1010101,
+      0b1111111,
+      0b0111110,
+    ],
+    melon: [
+      0b0000000,
+      0b0111110,
+      0b1111111,
+      0b1010101,
+      0b1111111,
+      0b0111110,
+      0b0011100,
+      0b0000000,
+    ],
+    pizza: [
+      0b0001000,
+      0b0011100,
+      0b0010100,
+      0b0111110,
+      0b0101010,
+      0b1111111,
+      0b1111111,
+      0b0000000,
+    ],
+    mushroom: [
+      0b0011100,
+      0b0111110,
+      0b1101011,
+      0b1111111,
+      0b0001000,
+      0b0011100,
+      0b0011100,
+      0b0000000,
+    ],
+    grape: [
+      0b0001000,
+      0b0010100,
+      0b0110110,
+      0b0111110,
+      0b1101011,
+      0b0111110,
+      0b0011100,
+      0b0000000,
+    ],
+    donut: [
+      0b0000000,
+      0b0011100,
+      0b0100010,
+      0b1000001,
+      0b1000001,
+      0b0100010,
+      0b0011100,
+      0b0000000,
+    ],
   };
+
+  // ── Level food types (cycles through these as levels advance) ──
+  const FOOD_TYPES = [
+    { bmp: BITMAPS.food,     color: PALETTE.RED,     name: "APPLE" },
+    { bmp: BITMAPS.cherry,   color: PALETTE.MAGENTA, name: "CHERRY" },
+    { bmp: BITMAPS.cookie,   color: PALETTE.ORANGE,  name: "COOKIE" },
+    { bmp: BITMAPS.banana,   color: PALETTE.YELLOW,  name: "BANANA" },
+    { bmp: BITMAPS.sandwich, color: PALETTE.GREEN,   name: "SANDWICH" },
+    { bmp: BITMAPS.melon,    color: PALETTE.AQUA,    name: "MELON" },
+    { bmp: BITMAPS.pizza,    color: PALETTE.APRICOT, name: "PIZZA" },
+    { bmp: BITMAPS.mushroom, color: PALETTE.WHITE,   name: "MUSHROOM" },
+    { bmp: BITMAPS.grape,    color: PALETTE.LTBLUE,  name: "GRAPE" },
+    { bmp: BITMAPS.donut,    color: PALETTE.MIDBLUE, name: "DONUT" },
+  ];
 
   // ── Apple II-style bitmap font (subset for our needs) ──
   // 7×8 bitmaps for uppercase + digits + punctuation
@@ -265,7 +371,6 @@
   let direction = DIR.RIGHT;
   let nextDirection = DIR.RIGHT;
   let foodPos = null;
-  let foodType = 0;       // alternates visual
   let score = 0;
   let hiScore = 0;
   let gameState = STATE_INTRO;
@@ -276,6 +381,10 @@
   let deathFlashTimer = 0;
   let lives = 3;
   let dyingTimer = 0;
+  let level = 1;
+  let foodEaten = 0;
+  let foodTarget = 5;
+  let levelUpTimer = 0;
 
   // Playfield boundaries (inside the wall border)
   // Row 0: title bar, Row 1: top wall, Row 22: bottom wall, Row 23: status bar
@@ -325,7 +434,6 @@
       const y = PLAY_TOP + Math.floor(Math.random() * (PLAY_BOTTOM - PLAY_TOP + 1));
       if (grid[y][x] === CELL_EMPTY) {
         foodPos = { x, y };
-        foodType = Math.random() < 0.5 ? 0 : 1;
         grid[y][x] = CELL_FOOD;
         return;
       }
@@ -336,6 +444,9 @@
   function startGame() {
     score = 0;
     lives = 3;
+    level = 1;
+    foodEaten = 0;
+    foodTarget = 5;
     tickInterval = 150;
     initGrid();
     initSnake();
@@ -378,7 +489,17 @@
       score += 10;
       // Speed up slightly
       if (tickInterval > 70) tickInterval -= 2;
-      spawnFood();
+      foodEaten++;
+      if (foodEaten >= foodTarget) {
+        // Level complete!
+        level++;
+        foodEaten = 0;
+        foodTarget = 5 + (level - 1) * 3;
+        gameState = STATE_LEVELUP;
+        levelUpTimer = 120;
+      } else {
+        spawnFood();
+      }
     } else {
       // Remove tail
       const tail = snake.pop();
@@ -443,6 +564,8 @@
     ctx.fillStyle = "#001800";
     ctx.fillRect(0, 0, CANVAS_W, PX_H);
     drawText("CINDY THE SNAKE", 1, 0, GREEN_TEXT);
+    const levelStr = "L:" + level;
+    drawText(levelStr, 18, 0, PALETTE.YELLOW);
     const scoreStr = "SCORE:" + String(score).padStart(5, "0");
     drawText(scoreStr, COLS - scoreStr.length - 1, 0, GREEN_TEXT);
 
@@ -453,11 +576,9 @@
         if (cell === CELL_WALL) {
           drawBitmap(BITMAPS.wall, c, r, PALETTE.GREEN, "#001200");
         } else if (cell === CELL_FOOD) {
-          const fbmp = foodType === 0 ? BITMAPS.food : BITMAPS.food2;
-          const fcol = foodType === 0 ? PALETTE.RED : PALETTE.YELLOW;
-          // Pulsing animation
+          const ft = FOOD_TYPES[(level - 1) % FOOD_TYPES.length];
           const pulse = Math.sin(animFrame * 0.15) > 0;
-          drawBitmap(fbmp, c, r, pulse ? fcol : PALETTE.ORANGE);
+          drawBitmap(ft.bmp, c, r, pulse ? ft.color : PALETTE.YELLOW);
         }
       }
     }
@@ -474,7 +595,7 @@
         else hbmp = BITMAPS.head_d;
 
         // Death flash
-        if (gameState === STATE_GAMEOVER && deathFlashTimer > 0) {
+        if ((gameState === STATE_GAMEOVER || gameState === STATE_DYING) && deathFlashTimer > 0) {
           const flashOn = deathFlashTimer % 2 === 0;
           drawBitmap(hbmp, seg.x, seg.y, flashOn ? PALETTE.WHITE : PALETTE.RED);
         } else {
@@ -494,6 +615,7 @@
     ctx.fillStyle = "#001800";
     ctx.fillRect(0, 23 * PX_H, CANVAS_W, PX_H);
     drawText("HI:" + String(hiScore).padStart(5, "0"), 1, 23, DIM_GREEN);
+    drawText(foodEaten + "/" + foodTarget, 12, 23, DIM_GREEN);
     // Lives display (heart icons)
     for (let i = 0; i < lives; i++) {
       drawBitmap(BITMAPS.life, COLS - 3 - i, 23, PALETTE.RED);
@@ -712,8 +834,9 @@
 
     drawTextCentered("GAME OVER!", 10, PALETTE.RED);
     drawTextCentered("SCORE: " + String(score).padStart(5, "0"), 12, GREEN_TEXT);
-    if (score >= hiScore) {
-      drawTextCentered("NEW HIGH SCORE!", 13, PALETTE.YELLOW);
+    drawTextCentered("LEVEL: " + level, 13, DIM_GREEN);
+    if (score >= hiScore && score > 0) {
+      drawTextCentered("NEW HIGH SCORE!", 14, PALETTE.YELLOW);
     }
 
     if (Math.sin(animFrame * 0.08) > 0) {
@@ -976,6 +1099,34 @@
         if (animFrame % 4 === 0) deathFlashTimer--;
       }
       renderGameOver();
+    } else if (gameState === STATE_LEVELUP) {
+      renderGame();
+      levelUpTimer--;
+      // Overlay box
+      ctx.fillStyle = "rgba(0,0,0,0.8)";
+      ctx.fillRect(5 * PX_W, 8 * PX_H, 30 * PX_W, 8 * PX_H);
+      for (let c = 5; c <= 34; c++) {
+        drawBitmap(BITMAPS.wall, c, 8, PALETTE.YELLOW);
+        drawBitmap(BITMAPS.wall, c, 15, PALETTE.YELLOW);
+      }
+      for (let r = 8; r <= 15; r++) {
+        drawBitmap(BITMAPS.wall, 5, r, PALETTE.YELLOW);
+        drawBitmap(BITMAPS.wall, 34, r, PALETTE.YELLOW);
+      }
+      drawTextCentered("LEVEL " + (level - 1) + " COMPLETE!", 10, PALETTE.YELLOW);
+      // Preview next food
+      const nextFt = FOOD_TYPES[(level - 1) % FOOD_TYPES.length];
+      const nextLabel = "NEXT: " + nextFt.name;
+      const labelCol = Math.floor((COLS - nextLabel.length) / 2);
+      drawText(nextLabel, labelCol, 12, GREEN_TEXT);
+      drawBitmap(nextFt.bmp, labelCol + nextLabel.length + 1, 12, nextFt.color);
+      if (Math.sin(animFrame * 0.1) > 0) {
+        drawTextCentered("GET READY!", 14, DIM_GREEN);
+      }
+      if (levelUpTimer <= 0) {
+        spawnFood();
+        gameState = STATE_PLAYING;
+      }
     } else if (gameState === STATE_DYING) {
       if (deathFlashTimer > 0) {
         if (animFrame % 4 === 0) deathFlashTimer--;
