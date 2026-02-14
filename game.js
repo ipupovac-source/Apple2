@@ -478,6 +478,8 @@
       return;
     }
 
+    playTickSound();
+
     const ateFood = (targetCell === CELL_FOOD);
 
     // Move head
@@ -486,6 +488,7 @@
 
     if (ateFood) {
       // Snake grows — don't remove tail
+      playEatSound();
       score += 10;
       // Speed up slightly
       if (tickInterval > 70) tickInterval -= 2;
@@ -895,14 +898,43 @@
       stopIntroMusic();
       introMusicStarted = true;
       let time = audioCtx.currentTime + 0.1;
-      const gap = 0.015; // tiny click gap between notes (Apple II feel)
+      const gap = 0.015;
+
+      // Calculate total melody duration
+      let totalDur = 0;
+      for (const [, d] of INTRO_MELODY) totalDur += d / 1000;
+
+      // Vinyl surface noise — simulates digitized record crackle
+      // (original was captured via gramophone → Apple II audio input)
+      const noiseBufLen = 2;
+      const noiseBuf = audioCtx.createBuffer(1,
+        audioCtx.sampleRate * noiseBufLen, audioCtx.sampleRate);
+      const nd = noiseBuf.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = noiseBuf;
+      noise.loop = true;
+      const nFilt = audioCtx.createBiquadFilter();
+      nFilt.type = "highpass";
+      nFilt.frequency.value = 800;
+      const nGain = audioCtx.createGain();
+      nGain.gain.value = 0.012;
+      noise.connect(nFilt);
+      nFilt.connect(nGain);
+      nGain.connect(audioCtx.destination);
+      noise.start(time);
+      noise.stop(time + totalDur + 0.5);
+      introMusicNodes.push(noise);
+
+      // Melody with turntable wobble (slight random detuning per note)
       for (const [freq, dur] of INTRO_MELODY) {
         const durSec = dur / 1000;
         if (freq > 0) {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
           osc.type = "square";
-          osc.frequency.value = freq;
+          // Turntable speed variation — ±0.6% random pitch drift
+          osc.frequency.value = freq * (1 + (Math.random() - 0.5) * 0.012);
           gain.gain.value = 0.06;
           osc.connect(gain);
           gain.connect(audioCtx.destination);
@@ -923,6 +955,42 @@
     }
     introMusicNodes = [];
     introMusicStarted = false;
+  }
+
+  // Short tick on every snake movement (Apple II speaker click)
+  function playTickSound() {
+    try {
+      if (!audioCtx || audioCtx.state !== "running") return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.value = 220;
+      gain.gain.value = 0.02;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      const t = audioCtx.currentTime;
+      osc.start(t);
+      osc.stop(t + 0.02);
+    } catch (e) {}
+  }
+
+  // Descending "gulp" when eating food
+  function playEatSound() {
+    try {
+      if (!audioCtx || audioCtx.state !== "running") return;
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(800, t);
+      osc.frequency.linearRampToValueAtTime(200, t + 0.12);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.linearRampToValueAtTime(0, t + 0.12);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.12);
+    } catch (e) {}
   }
 
   // ============================================================
