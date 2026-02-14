@@ -637,30 +637,6 @@
       playIntroMusic();
     }
 
-    // --- Searchlight beams (behind the monument) ---
-    // Source point: bottom-right area
-    // Sweep angle: oscillate slowly
-    var baseAngle = -Math.PI / 2; // straight up
-    var sweep = Math.sin(introTimer * 0.012) * 0.6;
-
-    // Draw right beam as filled grid cells (Apple II style, pixelated)
-    var coneHalf = 0.25;
-    var srcCol1 = 32, srcRow = 22;
-    var beamColor = "#004400";
-    for (var r = 0; r < ROWS; r++) {
-      for (var c = 0; c < COLS; c++) {
-        var cellCx = c + 0.5;
-        var cellCy = r + 0.5;
-        var dx1 = cellCx - srcCol1, dy1 = cellCy - srcRow;
-        var a1 = Math.atan2(dy1, dx1);
-        var center1 = baseAngle + sweep;
-        var diff1 = Math.atan2(Math.sin(a1 - center1), Math.cos(a1 - center1));
-        if (Math.abs(diff1) < coneHalf && dy1 < 0) {
-          drawBitmap(BITMAPS.wall, c, r, beamColor);
-        }
-      }
-    }
-
     // --- Monument / pedestal structure ---
     // Base platform
     for (var c = 8; c <= 31; c++) {
