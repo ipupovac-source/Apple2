@@ -637,87 +637,58 @@
       playIntroMusic();
     }
 
-    // --- Searchlight beams (behind the monument, from bottom) ---
-    var baseAngle = -Math.PI / 2; // straight up
+    // --- Single searchlight beam from the right ---
+    var baseAngle = -Math.PI / 2;
+    var sweep = Math.sin(introTimer * 0.012) * 0.6;
+    var coneHalf = 0.25;
+    var srcCol = 34, srcRow = 22;
     var beamColor = "#003300";
     var beamBright = "#004400";
-
-    // Multiple beams sweeping from different source points along the bottom
-    var beams = [
-      { col: 10, sweep: Math.sin(introTimer * 0.010) * 0.7, half: 0.18 },
-      { col: 20, sweep: Math.sin(introTimer * 0.008 + 1.0) * 0.5, half: 0.22 },
-      { col: 30, sweep: Math.sin(introTimer * 0.012 + 2.0) * 0.7, half: 0.18 },
-      { col: 5,  sweep: Math.sin(introTimer * 0.009 + 0.5) * 0.8, half: 0.15 },
-      { col: 35, sweep: Math.sin(introTimer * 0.011 + 1.5) * 0.8, half: 0.15 },
-    ];
-    var srcRow = 23;
     for (var r = 0; r < ROWS; r++) {
       for (var c = 0; c < COLS; c++) {
-        var cellCx = c + 0.5;
-        var cellCy = r + 0.5;
-        for (var bi = 0; bi < beams.length; bi++) {
-          var bm = beams[bi];
-          var dx = cellCx - bm.col, dy = cellCy - srcRow;
-          if (dy >= 0) continue;
-          var a = Math.atan2(dy, dx);
-          var center = baseAngle + bm.sweep;
-          var diff = Math.atan2(Math.sin(a - center), Math.cos(a - center));
-          if (Math.abs(diff) < bm.half) {
-            var dist = Math.sqrt(dx * dx + dy * dy);
-            var clr = dist < 12 ? beamBright : beamColor;
-            drawBitmap(BITMAPS.wall, c, r, clr);
-            break;
-          }
+        var dx = c + 0.5 - srcCol, dy = r + 0.5 - srcRow;
+        if (dy >= 0) continue;
+        var a = Math.atan2(dy, dx);
+        var center = baseAngle + sweep;
+        var diff = Math.atan2(Math.sin(a - center), Math.cos(a - center));
+        if (Math.abs(diff) < coneHalf) {
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          drawBitmap(BITMAPS.wall, c, r, dist < 10 ? beamBright : beamColor);
         }
       }
     }
 
-    // --- Monument / pedestal structure (full screen, Fox-style) ---
+    // --- Monument / pedestal structure (smaller, centered) ---
 
-    // Wide base platform
-    for (var c = 5; c <= 34; c++) {
-      drawBitmap(BITMAPS.wall, c, 17, PALETTE.GREEN);
+    // Top cap
+    for (var c = 11; c <= 28; c++) {
+      drawBitmap(BITMAPS.wall, c, 7, PALETTE.GREEN);
     }
-    // Steps (progressively wider)
-    for (var c3 = 3; c3 <= 36; c3++) {
-      drawBitmap(BITMAPS.wall, c3, 18, DIM_GREEN);
+    // Pillars
+    for (var r2 = 8; r2 <= 15; r2++) {
+      drawBitmap(BITMAPS.wall, 11, r2, DIM_GREEN);
+      drawBitmap(BITMAPS.wall, 12, r2, PALETTE.GREEN);
+      drawBitmap(BITMAPS.wall, 27, r2, PALETTE.GREEN);
+      drawBitmap(BITMAPS.wall, 28, r2, DIM_GREEN);
     }
-    for (var c4 = 1; c4 <= 38; c4++) {
-      drawBitmap(BITMAPS.wall, c4, 19, "#0a4a0a");
+    // Base platform
+    for (var c2 = 11; c2 <= 28; c2++) {
+      drawBitmap(BITMAPS.wall, c2, 16, PALETTE.GREEN);
     }
-    for (var c5 = 0; c5 <= 39; c5++) {
-      drawBitmap(BITMAPS.wall, c5, 20, "#073307");
+    // Steps
+    for (var c3 = 9; c3 <= 30; c3++) {
+      drawBitmap(BITMAPS.wall, c3, 17, DIM_GREEN);
     }
-
-    // Outer pillars
-    for (var r2 = 4; r2 <= 16; r2++) {
-      drawBitmap(BITMAPS.wall, 5, r2, DIM_GREEN);
-      drawBitmap(BITMAPS.wall, 6, r2, PALETTE.GREEN);
-      drawBitmap(BITMAPS.wall, 33, r2, PALETTE.GREEN);
-      drawBitmap(BITMAPS.wall, 34, r2, DIM_GREEN);
-    }
-    // Inner pillars
-    for (var r3 = 4; r3 <= 16; r3++) {
-      drawBitmap(BITMAPS.wall, 12, r3, DIM_GREEN);
-      drawBitmap(BITMAPS.wall, 13, r3, PALETTE.GREEN);
-      drawBitmap(BITMAPS.wall, 26, r3, PALETTE.GREEN);
-      drawBitmap(BITMAPS.wall, 27, r3, DIM_GREEN);
-    }
-    // Top cap / entablature
-    for (var c6 = 5; c6 <= 34; c6++) {
-      drawBitmap(BITMAPS.wall, c6, 3, PALETTE.GREEN);
-    }
-    // Thin cornice above
-    for (var c7 = 4; c7 <= 35; c7++) {
-      drawBitmap(BITMAPS.wall, c7, 2, DIM_GREEN);
+    for (var c4 = 7; c4 <= 32; c4++) {
+      drawBitmap(BITMAPS.wall, c4, 18, "#0a4a0a");
     }
 
-    // --- "21ST CENTURY" at top (inside the entablature) ---
-    drawBigText("21ST", 16, 4, GREEN_TEXT);
-    drawBigText("CENTURY", 13, 6, GREEN_TEXT);
+    // --- "21ST CENTURY" on the monument ---
+    drawBigText("21ST", 16, 9, GREEN_TEXT);
+    drawBigText("CENTURY", 13, 12, GREEN_TEXT);
 
-    // --- "IPS" large and prominent at the bottom of the monument ---
-    drawHugeText("IPS", 13, 9, PALETTE.WHITE);
+    // --- "IPS" large below the monument ---
+    drawHugeText("IPS", 13, 19, PALETTE.WHITE);
 
     // --- Bottom text ---
     drawTextCentered("PRESENTS", 22, DIM_GREEN);
