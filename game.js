@@ -648,45 +648,37 @@
     var beamSpread = 0.08;
 
     ctx.save();
-    ctx.globalAlpha = 0.12;
-    for (var b = 0; b < NUM_BEAMS; b++) {
-      var angle = baseAngle + sweep + (b - (NUM_BEAMS - 1) / 2) * beamSpread;
-      var beamLen = CANVAS_H * 1.2;
-      var endX = srcX + Math.cos(angle) * beamLen;
-      var endY = srcY + Math.sin(angle) * beamLen;
-      // Draw beam as a thin triangle
-      var perpX = Math.cos(angle + Math.PI / 2) * 3;
-      var perpY = Math.sin(angle + Math.PI / 2) * 3;
-      ctx.fillStyle = GREEN_TEXT;
-      ctx.beginPath();
-      ctx.moveTo(srcX - 2, srcY);
-      ctx.lineTo(srcX + 2, srcY);
-      ctx.lineTo(endX + perpX, endY + perpY);
-      ctx.lineTo(endX - perpX, endY - perpY);
-      ctx.closePath();
-      ctx.fill();
-    }
+    // Right searchlight — wide filled cone
+    var coneHalf = 0.22; // half-angle of the full cone
+    var angle1r = baseAngle + sweep - coneHalf;
+    var angle2r = baseAngle + sweep + coneHalf;
+    var beamLen = CANVAS_H * 1.3;
+    var grad = ctx.createRadialGradient(srcX, srcY, 0, srcX, srcY, beamLen);
+    grad.addColorStop(0, "rgba(0,255,0,0.18)");
+    grad.addColorStop(1, "rgba(0,255,0,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(srcX, srcY);
+    ctx.lineTo(srcX + Math.cos(angle1r) * beamLen, srcY + Math.sin(angle1r) * beamLen);
+    ctx.arc(srcX, srcY, beamLen, angle1r, angle2r);
+    ctx.closePath();
+    ctx.fill();
 
-    // Second searchlight from left
+    // Second searchlight from left — wide filled cone
     var srcX2 = 8 * PX_W;
     var sweep2 = Math.sin(introTimer * 0.015 + 1.5) * 0.5;
-    for (var b2 = 0; b2 < 3; b2++) {
-      var angle2 = baseAngle + sweep2 + (b2 - 1) * beamSpread;
-      var beamLen2 = CANVAS_H * 1.2;
-      var endX2 = srcX2 + Math.cos(angle2) * beamLen2;
-      var endY2 = srcY + Math.sin(angle2) * beamLen2;
-      var perpX2 = Math.cos(angle2 + Math.PI / 2) * 2;
-      var perpY2 = Math.sin(angle2 + Math.PI / 2) * 2;
-      ctx.fillStyle = GREEN_TEXT;
-      ctx.beginPath();
-      ctx.moveTo(srcX2 - 2, srcY);
-      ctx.lineTo(srcX2 + 2, srcY);
-      ctx.lineTo(endX2 + perpX2, endY2 + perpY2);
-      ctx.lineTo(endX2 - perpX2, endY2 - perpY2);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1.0;
+    var angle1l = baseAngle + sweep2 - coneHalf;
+    var angle2l = baseAngle + sweep2 + coneHalf;
+    var grad2 = ctx.createRadialGradient(srcX2, srcY, 0, srcX2, srcY, beamLen);
+    grad2.addColorStop(0, "rgba(0,255,0,0.18)");
+    grad2.addColorStop(1, "rgba(0,255,0,0)");
+    ctx.fillStyle = grad2;
+    ctx.beginPath();
+    ctx.moveTo(srcX2, srcY);
+    ctx.lineTo(srcX2 + Math.cos(angle1l) * beamLen, srcY + Math.sin(angle1l) * beamLen);
+    ctx.arc(srcX2, srcY, beamLen, angle1l, angle2l);
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
 
     // --- Monument / pedestal structure ---
