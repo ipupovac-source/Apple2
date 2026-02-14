@@ -44,6 +44,7 @@
   const DIM_GREEN  = "#118811";
 
   // ── Game states ──
+  const STATE_INTRO    = 4;
   const STATE_TITLE    = 0;
   const STATE_PLAYING  = 1;
   const STATE_GAMEOVER = 2;
@@ -255,7 +256,8 @@
   let foodType = 0;       // alternates visual
   let score = 0;
   let hiScore = 0;
-  let gameState = STATE_TITLE;
+  let gameState = STATE_INTRO;
+  let introTimer = 0;
   let tickInterval = 150; // ms between moves
   let lastTick = 0;
   let animFrame = 0;      // for blinking cursor / animations
@@ -477,6 +479,136 @@
     }
   }
 
+  // ── Intro splash: "21ST CENTURY IPS" with searchlight ──
+  function renderIntro() {
+    clearScreen();
+    introTimer++;
+
+    // --- Searchlight beams (behind the monument) ---
+    // Source point: bottom-right area
+    var srcX = 32 * PX_W;
+    var srcY = 22 * PX_H;
+    // Sweep angle: oscillate slowly
+    var baseAngle = -Math.PI / 2; // straight up
+    var sweep = Math.sin(introTimer * 0.012) * 0.6;
+    var NUM_BEAMS = 5;
+    var beamSpread = 0.08;
+
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    for (var b = 0; b < NUM_BEAMS; b++) {
+      var angle = baseAngle + sweep + (b - (NUM_BEAMS - 1) / 2) * beamSpread;
+      var beamLen = CANVAS_H * 1.2;
+      var endX = srcX + Math.cos(angle) * beamLen;
+      var endY = srcY + Math.sin(angle) * beamLen;
+      // Draw beam as a thin triangle
+      var perpX = Math.cos(angle + Math.PI / 2) * 3;
+      var perpY = Math.sin(angle + Math.PI / 2) * 3;
+      ctx.fillStyle = GREEN_TEXT;
+      ctx.beginPath();
+      ctx.moveTo(srcX - 2, srcY);
+      ctx.lineTo(srcX + 2, srcY);
+      ctx.lineTo(endX + perpX, endY + perpY);
+      ctx.lineTo(endX - perpX, endY - perpY);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Second searchlight from left
+    var srcX2 = 8 * PX_W;
+    var sweep2 = Math.sin(introTimer * 0.015 + 1.5) * 0.5;
+    for (var b2 = 0; b2 < 3; b2++) {
+      var angle2 = baseAngle + sweep2 + (b2 - 1) * beamSpread;
+      var beamLen2 = CANVAS_H * 1.2;
+      var endX2 = srcX2 + Math.cos(angle2) * beamLen2;
+      var endY2 = srcY + Math.sin(angle2) * beamLen2;
+      var perpX2 = Math.cos(angle2 + Math.PI / 2) * 2;
+      var perpY2 = Math.sin(angle2 + Math.PI / 2) * 2;
+      ctx.fillStyle = GREEN_TEXT;
+      ctx.beginPath();
+      ctx.moveTo(srcX2 - 2, srcY);
+      ctx.lineTo(srcX2 + 2, srcY);
+      ctx.lineTo(endX2 + perpX2, endY2 + perpY2);
+      ctx.lineTo(endX2 - perpX2, endY2 - perpY2);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+    ctx.restore();
+
+    // --- Monument / pedestal structure ---
+    // Base platform
+    for (var c = 8; c <= 31; c++) {
+      drawBitmap(BITMAPS.wall, c, 18, PALETTE.GREEN);
+    }
+    // Pillars
+    for (var r = 8; r <= 17; r++) {
+      drawBitmap(BITMAPS.wall, 8, r, PALETTE.GREEN);
+      drawBitmap(BITMAPS.wall, 9, r, PALETTE.GREEN);
+      drawBitmap(BITMAPS.wall, 30, r, PALETTE.GREEN);
+      drawBitmap(BITMAPS.wall, 31, r, PALETTE.GREEN);
+    }
+    // Top cap
+    for (var c2 = 8; c2 <= 31; c2++) {
+      drawBitmap(BITMAPS.wall, c2, 7, PALETTE.GREEN);
+    }
+    // Steps
+    for (var c3 = 6; c3 <= 33; c3++) {
+      drawBitmap(BITMAPS.wall, c3, 19, DIM_GREEN);
+    }
+    for (var c4 = 4; c4 <= 35; c4++) {
+      drawBitmap(BITMAPS.wall, c4, 20, "#0a4a0a");
+    }
+
+    // --- Big text: "21ST" ---
+    // Draw each letter 2x2 cells for a big look
+    drawBigText("21ST", 13, 9, GREEN_TEXT);
+
+    // --- "CENTURY" ---
+    drawBigText("CENTURY", 10, 12, GREEN_TEXT);
+
+    // --- "IPS" ---
+    drawBigText("IPS", 15, 15, PALETTE.WHITE);
+
+    // --- Bottom text ---
+    drawTextCentered("PRESENTS", 22, DIM_GREEN);
+
+    // --- Blinking skip prompt ---
+    if (introTimer > 60 && Math.sin(animFrame * 0.1) > 0) {
+      drawTextCentered("TAP OR PRESS SPACE", 23, "#005500");
+    }
+
+    // Auto-advance after ~6 seconds
+    if (introTimer > 360) {
+      gameState = STATE_TITLE;
+      introTimer = 0;
+    }
+  }
+
+  // Draw text with 2×2 scaled characters (big logo text)
+  function drawBigText(str, startCol, startRow, color) {
+    var s = str.toUpperCase();
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      var bmp = FONT[ch];
+      if (!bmp) continue;
+      // Draw the bitmap scaled 2x, at grid positions
+      var ox = (startCol + i * 2) * PX_W;
+      var oy = startRow * PX_H;
+      ctx.fillStyle = color;
+      for (var r = 0; r < 8; r++) {
+        var bits = bmp[r];
+        for (var b = 6; b >= 0; b--) {
+          if (bits & (1 << b)) {
+            var px = (6 - b) * SCALE * 2;
+            var py = r * SCALE * 2;
+            ctx.fillRect(ox + px, oy + py, SCALE * 2, SCALE * 2);
+          }
+        }
+      }
+    }
+  }
+
   // ── Title screen ──
   function renderTitle() {
     clearScreen();
@@ -575,6 +707,11 @@
       e.preventDefault();
     }
 
+    if (gameState === STATE_INTRO) {
+      if (e.key === " ") { gameState = STATE_TITLE; introTimer = 0; }
+      return;
+    }
+
     if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
       if (e.key === " ") startGame();
       return;
@@ -625,7 +762,10 @@
 
     // Tap (short touch, small movement) — acts as Space
     if (elapsed < 300 && Math.abs(dx) < 20 && Math.abs(dy) < 20) {
-      if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
+      if (gameState === STATE_INTRO) {
+        gameState = STATE_TITLE; introTimer = 0;
+        return;
+      } else if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
         startGame();
       } else if (gameState === STATE_PLAYING) {
         gameState = STATE_PAUSED;
@@ -685,7 +825,9 @@
   function gameLoop(timestamp) {
     animFrame++;
 
-    if (gameState === STATE_PLAYING) {
+    if (gameState === STATE_INTRO) {
+      renderIntro();
+    } else if (gameState === STATE_PLAYING) {
       if (timestamp - lastTick >= tickInterval) {
         tick();
         lastTick = timestamp;
