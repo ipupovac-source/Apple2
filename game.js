@@ -627,7 +627,7 @@
     }
   }
 
-  // ── Intro splash: "21ST CENTURY IPS" with searchlight ──
+  // ── Intro splash: "21ST CENTURY IPS" — 20th Century Fox style ──
   function renderIntro() {
     clearScreen();
     introTimer++;
@@ -637,63 +637,87 @@
       playIntroMusic();
     }
 
-    // --- Searchlight beams (behind the monument) ---
-    // Source point: bottom-right area
-    // Sweep angle: oscillate slowly
+    // --- Searchlight beams (behind the monument, from bottom) ---
     var baseAngle = -Math.PI / 2; // straight up
-    var sweep = Math.sin(introTimer * 0.012) * 0.6;
+    var beamColor = "#003300";
+    var beamBright = "#004400";
 
-    // Draw right beam as filled grid cells (Apple II style, pixelated)
-    var coneHalf = 0.25;
-    var srcCol1 = 32, srcRow = 22;
-    var beamColor = "#004400";
+    // Multiple beams sweeping from different source points along the bottom
+    var beams = [
+      { col: 10, sweep: Math.sin(introTimer * 0.010) * 0.7, half: 0.18 },
+      { col: 20, sweep: Math.sin(introTimer * 0.008 + 1.0) * 0.5, half: 0.22 },
+      { col: 30, sweep: Math.sin(introTimer * 0.012 + 2.0) * 0.7, half: 0.18 },
+      { col: 5,  sweep: Math.sin(introTimer * 0.009 + 0.5) * 0.8, half: 0.15 },
+      { col: 35, sweep: Math.sin(introTimer * 0.011 + 1.5) * 0.8, half: 0.15 },
+    ];
+    var srcRow = 23;
     for (var r = 0; r < ROWS; r++) {
       for (var c = 0; c < COLS; c++) {
         var cellCx = c + 0.5;
         var cellCy = r + 0.5;
-        var dx1 = cellCx - srcCol1, dy1 = cellCy - srcRow;
-        var a1 = Math.atan2(dy1, dx1);
-        var center1 = baseAngle + sweep;
-        var diff1 = Math.atan2(Math.sin(a1 - center1), Math.cos(a1 - center1));
-        if (Math.abs(diff1) < coneHalf && dy1 < 0) {
-          drawBitmap(BITMAPS.wall, c, r, beamColor);
+        for (var bi = 0; bi < beams.length; bi++) {
+          var bm = beams[bi];
+          var dx = cellCx - bm.col, dy = cellCy - srcRow;
+          if (dy >= 0) continue;
+          var a = Math.atan2(dy, dx);
+          var center = baseAngle + bm.sweep;
+          var diff = Math.atan2(Math.sin(a - center), Math.cos(a - center));
+          if (Math.abs(diff) < bm.half) {
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var clr = dist < 12 ? beamBright : beamColor;
+            drawBitmap(BITMAPS.wall, c, r, clr);
+            break;
+          }
         }
       }
     }
 
-    // --- Monument / pedestal structure ---
-    // Base platform
-    for (var c = 8; c <= 31; c++) {
-      drawBitmap(BITMAPS.wall, c, 18, PALETTE.GREEN);
+    // --- Monument / pedestal structure (full screen, Fox-style) ---
+
+    // Wide base platform
+    for (var c = 5; c <= 34; c++) {
+      drawBitmap(BITMAPS.wall, c, 17, PALETTE.GREEN);
     }
-    // Pillars
-    for (var r = 8; r <= 17; r++) {
-      drawBitmap(BITMAPS.wall, 8, r, PALETTE.GREEN);
-      drawBitmap(BITMAPS.wall, 9, r, PALETTE.GREEN);
-      drawBitmap(BITMAPS.wall, 30, r, PALETTE.GREEN);
-      drawBitmap(BITMAPS.wall, 31, r, PALETTE.GREEN);
+    // Steps (progressively wider)
+    for (var c3 = 3; c3 <= 36; c3++) {
+      drawBitmap(BITMAPS.wall, c3, 18, DIM_GREEN);
     }
-    // Top cap
-    for (var c2 = 8; c2 <= 31; c2++) {
-      drawBitmap(BITMAPS.wall, c2, 7, PALETTE.GREEN);
+    for (var c4 = 1; c4 <= 38; c4++) {
+      drawBitmap(BITMAPS.wall, c4, 19, "#0a4a0a");
     }
-    // Steps
-    for (var c3 = 6; c3 <= 33; c3++) {
-      drawBitmap(BITMAPS.wall, c3, 19, DIM_GREEN);
-    }
-    for (var c4 = 4; c4 <= 35; c4++) {
-      drawBitmap(BITMAPS.wall, c4, 20, "#0a4a0a");
+    for (var c5 = 0; c5 <= 39; c5++) {
+      drawBitmap(BITMAPS.wall, c5, 20, "#073307");
     }
 
-    // --- Big text: "21ST" ---
-    // Draw each letter 2x2 cells for a big look
-    drawBigText("21ST", 13, 9, GREEN_TEXT);
+    // Outer pillars
+    for (var r2 = 4; r2 <= 16; r2++) {
+      drawBitmap(BITMAPS.wall, 5, r2, DIM_GREEN);
+      drawBitmap(BITMAPS.wall, 6, r2, PALETTE.GREEN);
+      drawBitmap(BITMAPS.wall, 33, r2, PALETTE.GREEN);
+      drawBitmap(BITMAPS.wall, 34, r2, DIM_GREEN);
+    }
+    // Inner pillars
+    for (var r3 = 4; r3 <= 16; r3++) {
+      drawBitmap(BITMAPS.wall, 12, r3, DIM_GREEN);
+      drawBitmap(BITMAPS.wall, 13, r3, PALETTE.GREEN);
+      drawBitmap(BITMAPS.wall, 26, r3, PALETTE.GREEN);
+      drawBitmap(BITMAPS.wall, 27, r3, DIM_GREEN);
+    }
+    // Top cap / entablature
+    for (var c6 = 5; c6 <= 34; c6++) {
+      drawBitmap(BITMAPS.wall, c6, 3, PALETTE.GREEN);
+    }
+    // Thin cornice above
+    for (var c7 = 4; c7 <= 35; c7++) {
+      drawBitmap(BITMAPS.wall, c7, 2, DIM_GREEN);
+    }
 
-    // --- "CENTURY" ---
-    drawBigText("CENTURY", 10, 12, GREEN_TEXT);
+    // --- "21ST CENTURY" at top (inside the entablature) ---
+    drawBigText("21ST", 16, 4, GREEN_TEXT);
+    drawBigText("CENTURY", 13, 6, GREEN_TEXT);
 
-    // --- "IPS" ---
-    drawBigText("IPS", 15, 15, PALETTE.WHITE);
+    // --- "IPS" large and prominent at the bottom of the monument ---
+    drawHugeText("IPS", 13, 9, PALETTE.WHITE);
 
     // --- Bottom text ---
     drawTextCentered("PRESENTS", 22, DIM_GREEN);
@@ -723,6 +747,29 @@
             var px = (6 - b) * SCALE * 2;
             var py = r * SCALE * 2;
             ctx.fillRect(ox + px, oy + py, SCALE * 2, SCALE * 2);
+          }
+        }
+      }
+    }
+  }
+
+  // Draw text with 3×3 scaled characters (huge logo text for "IPS")
+  function drawHugeText(str, startCol, startRow, color) {
+    var s = str.toUpperCase();
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      var bmp = FONT[ch];
+      if (!bmp) continue;
+      var ox = (startCol + i * 3) * PX_W;
+      var oy = startRow * PX_H;
+      ctx.fillStyle = color;
+      for (var r = 0; r < 8; r++) {
+        var bits = bmp[r];
+        for (var b = 6; b >= 0; b--) {
+          if (bits & (1 << b)) {
+            var px = (6 - b) * SCALE * 3;
+            var py = r * SCALE * 3;
+            ctx.fillRect(ox + px, oy + py, SCALE * 3, SCALE * 3);
           }
         }
       }
