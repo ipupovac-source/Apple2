@@ -51,6 +51,7 @@
   const STATE_PAUSED   = 3;
   const STATE_DYING    = 5;
   const STATE_LEVELUP  = 6;
+  const STATE_LEVEL_READY = 7;
 
   // ── Backend cell types (character grid) ──
   const CELL_EMPTY = 0;
@@ -466,6 +467,7 @@
     const targetCell = grid[ny][nx];
     if (targetCell === CELL_WALL || targetCell === CELL_SNAKE) {
       // Death!
+      playCrashSound();
       lives--;
       deathFlashTimer = 12;
       if (lives <= 0) {
@@ -989,6 +991,28 @@
     } catch (e) {}
   }
 
+  // Noise burst when snake crashes into wall/self
+  function playCrashSound() {
+    try {
+      if (!audioCtx || audioCtx.state !== "running") return;
+      const t = audioCtx.currentTime;
+      const bufferSize = audioCtx.sampleRate * 0.15;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.linearRampToValueAtTime(0, t + 0.15);
+      noise.connect(gain);
+      gain.connect(audioCtx.destination);
+      noise.start(t);
+    } catch (e) {}
+  }
+
   // ============================================================
   //  INPUT HANDLING
   // ============================================================
@@ -1021,6 +1045,11 @@
 
     if (gameState === STATE_GAMEOVER) {
       if (e.key === " ") { gameState = STATE_INTRO; introTimer = 0; }
+      return;
+    }
+
+    if (gameState === STATE_LEVEL_READY) {
+      if (e.key === " ") { gameState = STATE_PLAYING; lastTick = performance.now(); }
       return;
     }
 
@@ -1096,6 +1125,9 @@
     } else if (gameState === STATE_GAMEOVER) {
       e.preventDefault();
       gameState = STATE_INTRO; introTimer = 0;
+    } else if (gameState === STATE_LEVEL_READY) {
+      e.preventDefault();
+      gameState = STATE_PLAYING; lastTick = performance.now();
     } else if (gameState === STATE_PLAYING) {
       // Only pause if tapping canvas area (not D-pad)
       if (e.target === canvas) {
@@ -1126,6 +1158,8 @@
             startGame();
           } else if (gameState === STATE_GAMEOVER) {
             gameState = STATE_INTRO; introTimer = 0;
+          } else if (gameState === STATE_LEVEL_READY) {
+            gameState = STATE_PLAYING; lastTick = performance.now();
           } else if (gameState === STATE_PLAYING) {
             handleDirection(dir);
           }
@@ -1191,7 +1225,26 @@
         initGrid();
         initSnake();
         spawnAllFood(foodTarget);
-        gameState = STATE_PLAYING;
+        gameState = STATE_LEVEL_READY;
+      }
+    } else if (gameState === STATE_LEVEL_READY) {
+      // Show level with all food placed, wait for Space
+      renderGame();
+      // Overlay box
+      ctx.fillStyle = "rgba(0,0,0,0.8)";
+      ctx.fillRect(5 * PX_W, 8 * PX_H, 30 * PX_W, 8 * PX_H);
+      for (let c = 5; c <= 34; c++) {
+        drawBitmap(BITMAPS.wall, c, 8, PALETTE.YELLOW);
+        drawBitmap(BITMAPS.wall, c, 15, PALETTE.YELLOW);
+      }
+      for (let r = 8; r <= 15; r++) {
+        drawBitmap(BITMAPS.wall, 5, r, PALETTE.YELLOW);
+        drawBitmap(BITMAPS.wall, 34, r, PALETTE.YELLOW);
+      }
+      drawTextCentered("LEVEL " + level, 10, PALETTE.YELLOW);
+      drawTextCentered("FOOD: " + foodTarget, 12, GREEN_TEXT);
+      if (Math.sin(animFrame * 0.1) > 0) {
+        drawTextCentered("PRESS SPACE", 14, DIM_GREEN);
       }
     } else if (gameState === STATE_DYING) {
       if (deathFlashTimer > 0) {
