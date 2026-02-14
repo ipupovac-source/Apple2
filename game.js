@@ -686,7 +686,7 @@
     }
 
     if (Math.sin(animFrame * 0.08) > 0) {
-      drawTextCentered("PRESS SPACE TO PLAY", 15, GREEN_TEXT);
+      drawTextCentered("TAP OR PRESS SPACE", 15, GREEN_TEXT);
     }
   }
 
@@ -740,7 +740,7 @@
   //  TOUCH / MOBILE INPUT
   // ============================================================
 
-  // Swipe detection
+  // Swipe detection on canvas (for gameplay direction changes)
   let touchStartX = 0;
   let touchStartY = 0;
   let touchStartTime = 0;
@@ -758,32 +758,40 @@
     const t = e.changedTouches[0];
     const dx = t.clientX - touchStartX;
     const dy = t.clientY - touchStartY;
-    const elapsed = Date.now() - touchStartTime;
 
-    // Tap (short touch, small movement) — acts as Space
-    if (elapsed < 300 && Math.abs(dx) < 20 && Math.abs(dy) < 20) {
-      if (gameState === STATE_INTRO) {
-        gameState = STATE_TITLE; introTimer = 0;
-        return;
-      } else if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
-        startGame();
-      } else if (gameState === STATE_PLAYING) {
-        gameState = STATE_PAUSED;
-      } else if (gameState === STATE_PAUSED) {
-        gameState = STATE_PLAYING;
+    // Swipe — change direction during gameplay
+    if (gameState === STATE_PLAYING) {
+      const SWIPE_MIN = 30;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > SWIPE_MIN) handleDirection(DIR.RIGHT);
+        else if (dx < -SWIPE_MIN) handleDirection(DIR.LEFT);
+      } else {
+        if (dy > SWIPE_MIN) handleDirection(DIR.DOWN);
+        else if (dy < -SWIPE_MIN) handleDirection(DIR.UP);
       }
-      return;
     }
+  }, { passive: false });
 
-    // Swipe — change direction
-    if (gameState !== STATE_PLAYING) return;
-    const SWIPE_MIN = 30;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      if (dx > SWIPE_MIN) handleDirection(DIR.RIGHT);
-      else if (dx < -SWIPE_MIN) handleDirection(DIR.LEFT);
-    } else {
-      if (dy > SWIPE_MIN) handleDirection(DIR.DOWN);
-      else if (dy < -SWIPE_MIN) handleDirection(DIR.UP);
+  // Tap anywhere on screen — for start, pause, skip intro
+  document.addEventListener("touchstart", function (e) {
+    // Don't handle D-pad button touches here
+    if (e.target.classList && e.target.classList.contains("dpad-btn")) return;
+
+    if (gameState === STATE_INTRO) {
+      e.preventDefault();
+      gameState = STATE_TITLE; introTimer = 0;
+    } else if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
+      e.preventDefault();
+      startGame();
+    } else if (gameState === STATE_PLAYING) {
+      // Only pause if tapping canvas area (not D-pad)
+      if (e.target === canvas) {
+        e.preventDefault();
+        gameState = STATE_PAUSED;
+      }
+    } else if (gameState === STATE_PAUSED) {
+      e.preventDefault();
+      gameState = STATE_PLAYING;
     }
   }, { passive: false });
 
