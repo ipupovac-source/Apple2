@@ -507,17 +507,17 @@
     drawBitmap(BITMAPS.food, 27, artRow, PALETTE.RED);
 
     // Instructions
-    drawTextCentered("ARROW KEYS OR WASD", 11, DIM_GREEN);
+    drawTextCentered("ARROWS/WASD OR SWIPE", 11, DIM_GREEN);
     drawTextCentered("TO MOVE", 12, DIM_GREEN);
 
     drawTextCentered("EAT FOOD TO GROW", 14, DIM_GREEN);
     drawTextCentered("AVOID WALLS AND YOURSELF", 15, DIM_GREEN);
 
-    drawTextCentered("P TO PAUSE", 17, DIM_GREEN);
+    drawTextCentered("TAP TO PAUSE", 17, DIM_GREEN);
 
     // Blinking prompt
     if (Math.sin(animFrame * 0.08) > 0) {
-      drawTextCentered("PRESS SPACE TO START", 20, GREEN_TEXT);
+      drawTextCentered("TAP OR PRESS SPACE", 20, GREEN_TEXT);
     }
 
     // Credits
@@ -598,6 +598,86 @@
       }
     }
   });
+
+  // ============================================================
+  //  TOUCH / MOBILE INPUT
+  // ============================================================
+
+  // Swipe detection
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+
+  canvas.addEventListener("touchstart", function (e) {
+    e.preventDefault();
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchStartTime = Date.now();
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", function (e) {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const elapsed = Date.now() - touchStartTime;
+
+    // Tap (short touch, small movement) — acts as Space
+    if (elapsed < 300 && Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+      if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
+        startGame();
+      } else if (gameState === STATE_PLAYING) {
+        gameState = STATE_PAUSED;
+      } else if (gameState === STATE_PAUSED) {
+        gameState = STATE_PLAYING;
+      }
+      return;
+    }
+
+    // Swipe — change direction
+    if (gameState !== STATE_PLAYING) return;
+    const SWIPE_MIN = 30;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > SWIPE_MIN) handleDirection(DIR.RIGHT);
+      else if (dx < -SWIPE_MIN) handleDirection(DIR.LEFT);
+    } else {
+      if (dy > SWIPE_MIN) handleDirection(DIR.DOWN);
+      else if (dy < -SWIPE_MIN) handleDirection(DIR.UP);
+    }
+  }, { passive: false });
+
+  // D-pad buttons
+  function setupDpad() {
+    var btns = {
+      "btn-up": DIR.UP,
+      "btn-down": DIR.DOWN,
+      "btn-left": DIR.LEFT,
+      "btn-right": DIR.RIGHT,
+    };
+    for (var id in btns) {
+      (function (dir) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("touchstart", function (e) {
+          e.preventDefault();
+          if (gameState === STATE_TITLE || gameState === STATE_GAMEOVER) {
+            startGame();
+          } else if (gameState === STATE_PLAYING) {
+            handleDirection(dir);
+          }
+        }, { passive: false });
+      })(btns[id]);
+    }
+  }
+
+  function handleDirection(dir) {
+    if (dir.x !== -direction.x || dir.y !== -direction.y) {
+      nextDirection = dir;
+    }
+  }
+
+  setupDpad();
 
   // ============================================================
   //  MAIN LOOP

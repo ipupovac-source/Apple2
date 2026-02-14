@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Cindy the Snake — Apple II</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -10,11 +10,16 @@
   body {
     background: #1a1a1a;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     font-family: monospace;
     overflow: hidden;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   /* Apple II monitor bezel */
@@ -90,6 +95,76 @@
   #game-canvas {
     filter: brightness(1.1);
   }
+
+  /* ── Mobile D-pad controls ── */
+  #dpad {
+    display: none;
+    margin-top: 16px;
+    position: relative;
+    width: 180px;
+    height: 180px;
+  }
+
+  .dpad-btn {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    background: #333;
+    border: 2px solid #555;
+    border-radius: 10px;
+    color: #33ff33;
+    font-size: 24px;
+    font-family: monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .dpad-btn:active {
+    background: #33ff33;
+    color: #000;
+  }
+
+  #btn-up    { top: 0;    left: 62px; }
+  #btn-down  { bottom: 0; left: 62px; }
+  #btn-left  { top: 62px; left: 0;    }
+  #btn-right { top: 62px; right: 0;   }
+
+  /* Center dot */
+  #dpad::after {
+    content: "";
+    position: absolute;
+    top: 72px; left: 72px;
+    width: 36px; height: 36px;
+    background: #222;
+    border-radius: 50%;
+    border: 1px solid #444;
+  }
+
+  /* Responsive scaling for mobile */
+  @media (max-width: 900px) {
+    #monitor {
+      padding: 12px 14px 32px 14px;
+      border-radius: 14px;
+    }
+    #monitor::after {
+      bottom: 8px;
+      font-size: 11px;
+    }
+    #screen-wrap {
+      padding: 6px;
+      border-radius: 8px;
+    }
+    #game-canvas {
+      width: 88vw;
+      height: auto;
+    }
+    #dpad {
+      display: grid;
+    }
+  }
 </style>
 </head>
 <body>
@@ -98,6 +173,14 @@
   <div id="screen-wrap">
     <canvas id="game-canvas"></canvas>
   </div>
+</div>
+
+<!-- Mobile D-pad -->
+<div id="dpad">
+  <button class="dpad-btn" id="btn-up">&#9650;</button>
+  <button class="dpad-btn" id="btn-down">&#9660;</button>
+  <button class="dpad-btn" id="btn-left">&#9664;</button>
+  <button class="dpad-btn" id="btn-right">&#9654;</button>
 </div>
 
 <script src="game.js"></script>
