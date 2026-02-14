@@ -375,7 +375,7 @@
   let hiScore = 0;
   let gameState = STATE_INTRO;
   let introTimer = 0;
-  let tickInterval = 80; // ms between moves
+  let tickInterval = 150; // ms between moves
   let lastTick = 0;
   let animFrame = 0;      // for blinking cursor / animations
   let deathFlashTimer = 0;
@@ -448,7 +448,7 @@
     level = 1;
     foodEaten = 0;
     foodTarget = 5;
-    tickInterval = 80;
+    tickInterval = 150;
     initGrid();
     initSnake();
     spawnAllFood(foodTarget);
