@@ -479,7 +479,7 @@
 <div id="controls">
   <button class="filter-btn btn-all active"     data-provider="0">Sve platforme</button>
   <button class="filter-btn btn-netflix"        data-provider="8">Netflix</button>
-  <button class="filter-btn btn-hbo"            data-provider="384">HBO Max</button>
+  <button class="filter-btn btn-hbo"            data-provider="1899">Max</button>
   <button class="filter-btn btn-prime"          data-provider="119">Prime Video</button>
   <button class="filter-btn btn-sky"            data-provider="1773">SkyShowtime</button>
 
@@ -517,12 +517,18 @@ const REGION      = 'HR';
 const PROVIDERS = {
   0:    { name: 'Sve platforme', badge: null },
   8:    { name: 'Netflix',       badge: 'netflix' },
-  384:  { name: 'HBO Max',       badge: 'hbo' },
+  384:  { name: 'Max',           badge: 'hbo' },  // stari HBO Max ID
+  1899: { name: 'Max',           badge: 'hbo' },  // novi Max ID (rebrand 2023.)
   119:  { name: 'Prime Video',   badge: 'prime' },
   1773: { name: 'SkyShowtime',   badge: 'sky' },
 };
 
-const PROVIDER_IDS = [8, 384, 119, 1773];
+// Kad filtriramo po provideru, neki imaju više TMDB ID-ova (Max = 384 + 1899)
+const PROVIDER_QUERY = {
+  1899: '384|1899',
+};
+
+const PROVIDER_IDS = [8, 384, 1899, 119, 1773];
 
 // ── State ────────────────────────────────────────────
 let apiKey         = '';
@@ -609,7 +615,7 @@ async function discoverMovies() {
     };
 
     if (activeProvider !== 0) {
-      params.with_watch_providers = activeProvider;
+      params.with_watch_providers = PROVIDER_QUERY[activeProvider] || activeProvider;
     } else {
       params.with_watch_providers = PROVIDER_IDS.join('|');
     }
@@ -674,8 +680,9 @@ function renderMovies(movies) {
     card.className = 'card';
 
     const provSet = movieProviders[movie.id] || new Set();
+    const seenBadges = new Set();
     const badges = PROVIDER_IDS
-      .filter(id => provSet.has(id))
+      .filter(id => provSet.has(id) && !seenBadges.has(PROVIDERS[id].badge) && seenBadges.add(PROVIDERS[id].badge))
       .map(id => `<span class="badge badge-${PROVIDERS[id].badge}">${PROVIDERS[id].name}</span>`)
       .join('');
 
@@ -724,8 +731,9 @@ async function openModal(movieId) {
         ].map(p => p.provider_id))]
       : [];
 
+    const seenModal = new Set();
     const badges = providerList
-      .filter(id => PROVIDERS[id])
+      .filter(id => PROVIDERS[id] && !seenModal.has(PROVIDERS[id].badge) && seenModal.add(PROVIDERS[id].badge))
       .map(id => `<span class="badge badge-${PROVIDERS[id].badge}" style="font-size:0.75rem;padding:3px 10px">${PROVIDERS[id].name}</span>`)
       .join('');
 
