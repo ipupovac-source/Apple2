@@ -36,10 +36,10 @@
     header {
       background: linear-gradient(to right, #150000, #200000);
       border-bottom: 3px solid var(--red);
-      padding: 14px 24px;
+      padding: 12px 20px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
     .logo {
       background: var(--red);
@@ -47,22 +47,22 @@
       font-weight: 900;
       font-size: 17px;
       letter-spacing: -1px;
-      width: 42px; height: 42px;
+      width: 40px; height: 40px;
       border-radius: 5px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-    header p  { font-size: 0.72rem; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
+    header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    header p  { font-size: 0.68rem; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
 
     /* ── Controls ─────────────────────────────────────────────── */
     .controls {
       background: var(--bg2);
       border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
+      padding: 12px 20px;
       display: flex;
       flex-wrap: wrap;
-      gap: 14px;
+      gap: 10px;
       align-items: flex-end;
     }
     .ctrl-group { display: flex; flex-direction: column; gap: 4px; }
@@ -78,10 +78,10 @@
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 4px;
-      padding: 8px 12px;
+      padding: 9px 32px 9px 12px;
       font-size: 0.82rem;
       cursor: pointer;
-      min-width: 200px;
+      min-width: 190px;
       outline: none;
       transition: border-color .15s;
       -webkit-appearance: none;
@@ -89,7 +89,6 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%23666' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 10px center;
-      padding-right: 28px;
     }
     select:hover, select:focus { border-color: var(--red); }
     select:disabled { opacity: .4; cursor: not-allowed; }
@@ -107,6 +106,7 @@
       cursor: pointer;
       transition: background .15s, transform .1s;
       white-space: nowrap;
+      min-height: 40px;
     }
     .btn:hover { background: var(--red-dark); }
     .btn:active { transform: scale(.98); }
@@ -116,10 +116,10 @@
     #statusBar {
       background: var(--bg2);
       border-bottom: 1px solid var(--border);
-      padding: 7px 24px;
+      padding: 7px 20px;
       display: none;
       flex-wrap: wrap;
-      gap: 20px;
+      gap: 16px;
       font-size: 0.72rem;
       color: var(--muted);
     }
@@ -133,7 +133,7 @@
       border: 1px solid rgba(255,69,58,.35);
       border-radius: 4px;
       padding: 10px 16px;
-      margin: 14px 24px 0;
+      margin: 12px 20px 0;
       font-size: 0.78rem;
       color: var(--danger);
     }
@@ -156,18 +156,42 @@
     .welcome h2 { font-size: 1.1rem; font-weight: 700; color: var(--red); margin-bottom: 8px; }
     .welcome p  { color: var(--muted); font-size: 0.82rem; line-height: 1.7; }
 
+    /* ── Mobile tabs ──────────────────────────────────────────── */
+    .mobile-tabs {
+      display: none;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 12px 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: color .15s, border-color .15s;
+    }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--red); }
+
     /* ── Main two-column grid ─────────────────────────────────── */
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
     }
-    @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
 
     .panel {
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      min-height: 440px;
     }
     .panel:last-child { border-right: none; }
 
@@ -197,23 +221,26 @@
       font-size: 0.65rem;
       font-weight: 700;
     }
-    .panel-body { overflow-y: auto; flex: 1; max-height: 520px; }
+    .panel-body { overflow-y: auto; flex: 1; max-height: 560px; }
 
     /* ── Moments list ─────────────────────────────────────────── */
     .moment-item {
-      padding: 11px 18px;
+      padding: 11px 16px;
       border-bottom: 1px solid var(--border);
       display: flex;
-      gap: 11px;
+      gap: 10px;
       align-items: flex-start;
-      cursor: default;
+      cursor: pointer;
       transition: background .12s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
     .moment-item:hover { background: var(--bg3); }
+    .moment-item.expanded { background: var(--bg3); }
 
     .m-icon {
       flex-shrink: 0;
-      width: 28px; height: 28px;
+      width: 30px; height: 30px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 13px;
@@ -233,11 +260,55 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .m-time { font-size: 0.68rem; color: var(--muted); font-family: monospace; flex-shrink: 0; margin-top: 2px; }
+    .m-time { font-size: 0.68rem; color: var(--muted); font-family: monospace; flex-shrink: 0; margin-top: 3px; }
+
+    .m-chevron {
+      flex-shrink: 0;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+      transition: transform .2s;
+      line-height: 1;
+    }
+    .moment-item.expanded .m-chevron { transform: rotate(90deg); color: var(--red); }
+
+    /* ── Moment radio drawer ──────────────────────────────────── */
+    .moment-radio-drawer {
+      background: #141414;
+      border-bottom: 1px solid var(--border);
+      display: none;
+    }
+    .moment-radio-drawer.open { display: block; }
+
+    .drawer-hdr {
+      padding: 7px 16px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+      background: #111;
+    }
+    .drawer-empty {
+      padding: 14px 16px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .drawer-radio-item {
+      padding: 9px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #141414;
+    }
+    .drawer-radio-item:last-child { border-bottom: none; }
 
     /* ── Radio list ───────────────────────────────────────────── */
     .radio-item {
-      padding: 11px 18px;
+      padding: 11px 16px;
       border-bottom: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -272,7 +343,7 @@
     }
     .play-btn {
       flex-shrink: 0;
-      width: 30px; height: 30px;
+      width: 34px; height: 34px;
       border-radius: 50%;
       border: 1px solid var(--border);
       background: var(--bg3);
@@ -281,30 +352,32 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 11px;
       transition: border-color .15s, color .15s, background .15s;
+      -webkit-tap-highlight-color: transparent;
     }
     .play-btn:hover { border-color: var(--red); color: var(--red); }
     .play-btn.playing { background: var(--red); border-color: var(--red); color: #fff; }
 
     .progress-bar {
       flex: 1;
-      height: 4px;
+      height: 6px;
       background: var(--border);
-      border-radius: 2px;
+      border-radius: 3px;
       cursor: pointer;
       position: relative;
+      touch-action: none;
     }
     .progress-fill {
       height: 100%;
       background: var(--red);
-      border-radius: 2px;
+      border-radius: 3px;
       pointer-events: none;
       transition: width .1s linear;
     }
-    .audio-dur { font-size: 0.65rem; color: var(--muted); font-family: monospace; min-width: 30px; flex-shrink: 0; }
+    .audio-dur { font-size: 0.65rem; color: var(--muted); font-family: monospace; min-width: 32px; flex-shrink: 0; }
 
     /* ── Position chart ───────────────────────────────────────── */
     .chart-wrap {
-      padding: 20px 24px;
+      padding: 18px 20px;
       border-top: 1px solid var(--border);
     }
     .chart-wrap h2 {
@@ -347,6 +420,44 @@
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+    /* ── Mobile ───────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      header { padding: 10px 14px; gap: 10px; }
+      header h1 { font-size: 0.95rem; letter-spacing: 1px; }
+      header p  { display: none; }
+      .logo { width: 36px; height: 36px; font-size: 15px; }
+
+      .controls {
+        padding: 10px 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .ctrl-group { width: 100%; }
+      .ctrl-group:nth-child(2) { grid-column: 1 / -1; }
+      select { min-width: unset; width: 100%; font-size: 0.8rem; }
+      .btn { grid-column: 1 / -1; width: 100%; }
+
+      #statusBar { padding: 7px 14px; gap: 10px; font-size: 0.68rem; }
+      #errorMsg { margin: 10px 14px 0; }
+
+      .mobile-tabs { display: flex; }
+
+      .main-grid { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--border); }
+      .panel-body { max-height: 52vh; }
+      .panel.tab-hidden { display: none; }
+
+      .moment-item { padding: 10px 14px; }
+      .m-detail { white-space: normal; }
+      .radio-item { padding: 10px 14px; }
+      .drawer-radio-item { padding: 9px 14px; }
+      .play-btn { width: 38px; height: 38px; font-size: 12px; }
+
+      .chart-wrap { padding: 14px; }
+      #posChart { height: 220px !important; }
+    }
   </style>
 </head>
 <body>
@@ -356,7 +467,7 @@
   <div class="logo">F1</div>
   <div>
     <h1>Highlights &amp; Radio</h1>
-    <p>Najzanimljiviji trenuci i radio poruke vozača &nbsp;•&nbsp; OpenF1 API</p>
+    <p>Ključni trenuci i radio poruke vozača &nbsp;•&nbsp; OpenF1 API</p>
   </div>
 </header>
 
@@ -371,15 +482,15 @@
     </select>
   </div>
   <div class="ctrl-group">
-    <label>Grand Prix</label>
-    <select id="meetingSel" disabled>
-      <option>— odaberi sezonu —</option>
-    </select>
-  </div>
-  <div class="ctrl-group">
     <label>Sesija</label>
     <select id="sessionSel" disabled>
       <option>— odaberi utrku —</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Grand Prix</label>
+    <select id="meetingSel" disabled>
+      <option>— odaberi sezonu —</option>
     </select>
   </div>
   <button class="btn" id="loadBtn" disabled>Učitaj</button>
@@ -399,7 +510,7 @@
     <h2>Formula 1 Highlights &amp; Radio</h2>
     <p>
       Odaberi sezonu, Grand Prix i sesiju, zatim pritisni <strong>Učitaj</strong>.<br>
-      Prikazat će se ključni trenuci (zastave, safety car, incidenti) i radio poruke vozača s audio playbackom.
+      Klikni na ključni trenutak da vidiš radio poruke vozača iz tog perioda.
     </p>
   </div>
 </div>
@@ -418,9 +529,12 @@ const content    = document.getElementById('content');
 const statusBar  = document.getElementById('statusBar');
 const errorMsg   = document.getElementById('errorMsg');
 
-/* ── Audio state ───────────────────────────────────────────────────── */
+/* ── Global state ──────────────────────────────────────────────────── */
+let allRadio     = [];
+let allDriverMap = {};
 let activeAudio  = null;
 let activeBtn    = null;
+const audios     = {};
 
 /* ── API helper ────────────────────────────────────────────────────── */
 async function get(path) {
@@ -546,26 +660,30 @@ async function loadSession() {
       <p>Dohvaćam podatke iz OpenF1 API-ja…</p>
     </div>`;
 
+  /* Reset audio state */
+  activeAudio = null;
+  activeBtn   = null;
+  for (const k in audios) delete audios[k];
+
   try {
-    /* Parallel fetch — drivers, race control, team radio */
     const [drivers, raceCtrl, radio] = await Promise.all([
       get(`/drivers?session_key=${sk}`),
       get(`/race_control?session_key=${sk}`),
       get(`/team_radio?session_key=${sk}`)
     ]);
 
-    /* Optional: position data for chart */
     let positions = [];
     try { positions = await get(`/position?session_key=${sk}`); } catch {}
 
-    /* Driver lookup by number */
     const driverMap = {};
     drivers.forEach(d => { driverMap[d.driver_number] = d; });
 
-    /* Filter interesting race control events */
+    /* Store globally for moment radio drawer */
+    allRadio     = radio;
+    allDriverMap = driverMap;
+
     const moments = raceCtrl.filter(isInteresting);
 
-    /* Update status bar */
     statusBar.style.display = 'flex';
     document.getElementById('stSession').innerHTML  =
       `<span class="dot"></span> ${sessionSel.options[sessionSel.selectedIndex].text}`;
@@ -586,15 +704,23 @@ async function loadSession() {
 /* ── Render ────────────────────────────────────────────────────────── */
 function render(moments, radio, driverMap, positions) {
   content.innerHTML = `
+    <div class="mobile-tabs" id="mobileTabs">
+      <button class="tab-btn active" id="tabMoments" onclick="switchTab('moments')">
+        Trenuci <span class="badge">${moments.length}</span>
+      </button>
+      <button class="tab-btn" id="tabRadio" onclick="switchTab('radio')">
+        Radio <span class="badge">${radio.length}</span>
+      </button>
+    </div>
     <div class="main-grid">
-      <div class="panel">
+      <div class="panel" id="panelMoments">
         <div class="panel-hdr">
           <h2>Ključni trenuci</h2>
           <span class="badge">${moments.length}</span>
         </div>
         <div class="panel-body" id="momentsList"></div>
       </div>
-      <div class="panel">
+      <div class="panel" id="panelRadio">
         <div class="panel-hdr">
           <h2>Team Radio</h2>
           <span class="badge">${radio.length}</span>
@@ -613,6 +739,26 @@ function render(moments, radio, driverMap, positions) {
   if (positions.length > 0) renderChart(positions, driverMap);
 }
 
+/* ── Mobile tab switch ─────────────────────────────────────────────── */
+function switchTab(tab) {
+  const pm = document.getElementById('panelMoments');
+  const pr = document.getElementById('panelRadio');
+  const tm = document.getElementById('tabMoments');
+  const tr = document.getElementById('tabRadio');
+  if (!pm) return;
+  if (tab === 'moments') {
+    pm.classList.remove('tab-hidden');
+    pr.classList.add('tab-hidden');
+    tm.classList.add('active');
+    tr.classList.remove('active');
+  } else {
+    pr.classList.remove('tab-hidden');
+    pm.classList.add('tab-hidden');
+    tr.classList.add('active');
+    tm.classList.remove('active');
+  }
+}
+
 /* ── Moments ───────────────────────────────────────────────────────── */
 function renderMoments(moments) {
   const list = document.getElementById('momentsList');
@@ -620,20 +766,77 @@ function renderMoments(moments) {
     list.innerHTML = `<div class="empty"><div class="icon">🏁</div><p>Nema zabilježenih ključnih trenutaka</p></div>`;
     return;
   }
-  list.innerHTML = moments.map(m => {
+  list.innerHTML = moments.map((m, mi) => {
     const { icon, cls, label } = classify(m);
     const lap    = m.lap_number ? `Krug ${m.lap_number}` : '';
     const detail = [lap, m.message].filter(Boolean).join(' · ');
     return `
-      <div class="moment-item">
+      <div class="moment-item" onclick="toggleMomentRadio(${mi}, '${escAttr(m.date || '')}', this)">
         <div class="m-icon ${cls}">${icon}</div>
         <div class="m-body">
           <div class="m-title">${label}</div>
           <div class="m-detail" title="${escHtml(m.message || '')}">${escHtml(detail)}</div>
         </div>
         <div class="m-time">${fmtTs(m.date)}</div>
-      </div>`;
+        <div class="m-chevron">›</div>
+      </div>
+      <div class="moment-radio-drawer" id="mrd-${mi}"></div>`;
   }).join('');
+}
+
+/* ── Toggle moment radio drawer ────────────────────────────────────── */
+function toggleMomentRadio(mi, momentDate, itemEl) {
+  const drawer = document.getElementById(`mrd-${mi}`);
+  if (!drawer) return;
+
+  const isOpen = drawer.classList.contains('open');
+  if (isOpen) {
+    drawer.classList.remove('open');
+    itemEl.classList.remove('expanded');
+    return;
+  }
+
+  /* Find radio messages within -30s … +120s of the moment */
+  const mTime  = new Date(momentDate).getTime();
+  const nearby = allRadio
+    .filter(r => {
+      const t = new Date(r.date).getTime();
+      return t >= mTime - 30_000 && t <= mTime + 120_000;
+    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (!nearby.length) {
+    drawer.innerHTML = `
+      <div class="drawer-hdr">Radio u periodu ovog trenutka</div>
+      <div class="drawer-empty">Nema radio poruka u ovom periodu (±2 min)</div>`;
+  } else {
+    const items = nearby.map((r, ri) => {
+      const d     = allDriverMap[r.driver_number] || {};
+      const abbr  = d.name_acronym || `#${r.driver_number}`;
+      const color = d.team_colour  ? `#${d.team_colour}` : '#666';
+      const id    = `m${mi}r${ri}`;
+      return `
+        <div class="drawer-radio-item">
+          <span class="drv-badge" style="border-left-color:${color}">${escHtml(abbr)}</span>
+          <span class="radio-ts">${fmtTs(r.date)}</span>
+          <div class="radio-player" style="flex:1">
+            <button class="play-btn" id="pb-${id}"
+              onclick="togglePlay('${id}', '${escAttr(r.recording_url)}')"
+              title="Reproduciraj">▶</button>
+            <div class="progress-bar" onclick="seekTo(event, this, '${id}')">
+              <div class="progress-fill" id="pf-${id}" style="width:0%"></div>
+            </div>
+            <span class="audio-dur" id="dur-${id}">0:00</span>
+          </div>
+        </div>`;
+    }).join('');
+    drawer.innerHTML = `
+      <div class="drawer-hdr">Radio u periodu ovog trenutka (${nearby.length})</div>
+      ${items}`;
+  }
+
+  drawer.classList.add('open');
+  itemEl.classList.add('expanded');
 }
 
 /* ── Radio ─────────────────────────────────────────────────────────── */
@@ -651,7 +854,7 @@ function renderRadio(radio, driverMap) {
     return `
       <div class="radio-item">
         <div class="radio-hdr">
-          <span class="drv-badge" style="border-left-color:${color}">${abbr}</span>
+          <span class="drv-badge" style="border-left-color:${color}">${escHtml(abbr)}</span>
           <span class="radio-ts">${fmtTs(r.date)}</span>
           <span class="radio-team">${escHtml(team)}</span>
         </div>
@@ -669,17 +872,17 @@ function renderRadio(radio, driverMap) {
 }
 
 /* ── Audio player ──────────────────────────────────────────────────── */
-const audios = {};
-
 function togglePlay(idx, url) {
-  /* Stop previous */
-  if (activeBtn && activeBtn !== document.getElementById(`pb-${idx}`)) {
+  const btn = document.getElementById(`pb-${idx}`);
+  if (!btn) return;
+
+  /* Stop previous if different */
+  if (activeBtn && activeBtn !== btn) {
     activeAudio.pause();
     activeBtn.textContent = '▶';
     activeBtn.classList.remove('playing');
   }
 
-  const btn = document.getElementById(`pb-${idx}`);
   if (!audios[idx]) {
     const a = new Audio(url);
     a.addEventListener('timeupdate', () => {
@@ -725,7 +928,6 @@ function seekTo(e, bar, idx) {
 function renderChart(positions, driverMap) {
   const wrap = document.getElementById('chartWrap');
 
-  /* Build per-driver timeline: array of { time, pos } */
   const byDriver = {};
   positions.forEach(p => {
     if (!p.driver_number || p.position == null) return;
@@ -736,7 +938,6 @@ function renderChart(positions, driverMap) {
   const drivers = Object.keys(byDriver).filter(d => byDriver[d].length > 1);
   if (!drivers.length) return;
 
-  /* Resample each driver's data to ~200 evenly-spaced points */
   const SAMPLES = 200;
   const tMin = Math.min(...drivers.map(d => byDriver[d][0].t));
   const tMax = Math.max(...drivers.map(d => byDriver[d][byDriver[d].length - 1].t));
@@ -758,20 +959,18 @@ function renderChart(positions, driverMap) {
 
   wrap.style.display = 'block';
   const canvas = document.getElementById('posChart');
-  const W = canvas.parentElement.clientWidth - 48;
-  canvas.width  = Math.max(W, 500);
-  canvas.height = 300;
+  const W = canvas.parentElement.clientWidth - 40;
+  canvas.width  = Math.max(W, 300);
+  canvas.height = canvas.getAttribute('height') || 300;
 
   const ctx = canvas.getContext('2d');
-  const pad = { top: 18, right: 60, bottom: 34, left: 36 };
+  const pad = { top: 18, right: 50, bottom: 34, left: 36 };
   const cW  = canvas.width  - pad.left - pad.right;
   const cH  = canvas.height - pad.top  - pad.bottom;
 
-  /* Background */
   ctx.fillStyle = '#181818';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  /* Grid */
   ctx.strokeStyle = '#2a2a2a';
   ctx.lineWidth = 1;
   for (let p = 1; p <= numPos; p++) {
@@ -787,17 +986,14 @@ function renderChart(positions, driverMap) {
     ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + cH); ctx.stroke();
   }
 
-  /* Axis labels */
   ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('Tijek sesije →', pad.left + cW / 2, canvas.height - 4);
   ctx.save(); ctx.translate(11, pad.top + cH / 2); ctx.rotate(-Math.PI / 2);
   ctx.fillText('Pozicija', 0, 0); ctx.restore();
 
-  /* Draw each driver's line */
   const legend = document.getElementById('legend');
   legend.innerHTML = '';
 
-  /* Sort drivers by final position */
   drivers.sort((a, b) => {
     const pa = byDriver[a][byDriver[a].length - 1].pos;
     const pb = byDriver[b][byDriver[b].length - 1].pos;
@@ -824,14 +1020,12 @@ function renderChart(positions, driverMap) {
     ctx.stroke();
     ctx.globalAlpha = 1;
 
-    /* Label at end of line */
     const last = pts[pts.length - 1];
     ctx.fillStyle = color;
     ctx.font = 'bold 9px monospace';
     ctx.textAlign = 'left';
     ctx.fillText(abbr, last.x + 3, last.y + 3);
 
-    /* Legend */
     const li = document.createElement('div');
     li.className = 'legend-item';
     li.innerHTML = `<div class="legend-bar" style="background:${color}"></div><span>${abbr}</span>`;
