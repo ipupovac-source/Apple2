@@ -634,12 +634,7 @@ async function fetchProviders(ids, type) {
       const data = await tmdb(`/${type}/${id}/watch/providers`);
       const hr = data.results?.HR;
       if (!hr) { results[id] = new Set(); return; }
-      const all = [
-        ...(hr.flatrate || []),
-        ...(hr.buy || []),
-        ...(hr.rent || []),
-      ];
-      results[id] = new Set(all.map(p => p.provider_id));
+      results[id] = new Set((hr.flatrate || []).map(p => p.provider_id));
     } catch {
       results[id] = new Set();
     }
@@ -675,6 +670,7 @@ async function discoverMovies() {
       sort_by: mappedSort,
       watch_region: REGION,
       'vote_count.gte': 50,
+      with_watch_monetization_types: 'flatrate',
     };
 
     if (activeProvider !== 0) {
@@ -802,11 +798,7 @@ async function openModal(itemId, type = 'movie') {
 
     const hr = providers.results?.HR;
     const providerList = hr
-      ? [...new Set([
-          ...(hr.flatrate || []),
-          ...(hr.buy || []),
-          ...(hr.rent || []),
-        ].map(p => p.provider_id))]
+      ? (hr.flatrate || []).map(p => p.provider_id)
       : [];
 
     const seenModal = new Set();
