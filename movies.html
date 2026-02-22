@@ -450,6 +450,30 @@
       pointer-events: none;
     }
 
+    /* ── Type toggle ──────────────────────────────────── */
+    #type-toggle {
+      padding: 10px 24px;
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .type-btn {
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--surface2);
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+
+    .type-btn.active { background: var(--gold); color: #000; border-color: var(--gold); }
+    .type-btn:hover:not(.active) { color: var(--text); }
+
     @media (max-width: 480px) {
       .modal-inner { flex-direction: column; }
       .modal-poster { width: 100%; max-width: 160px; }
@@ -459,7 +483,7 @@
 <body>
 
 <header>
-  <h1>Filmovi <span>HR</span></h1>
+  <h1>Filmovi &amp; Serije <span>HR</span></h1>
   <small style="color:var(--muted)">Streaming dostupan u Hrvatskoj</small>
 </header>
 
@@ -477,9 +501,15 @@
   </a>
 </div>
 
+<!-- Content type toggle -->
+<div id="type-toggle">
+  <button class="type-btn active" data-type="movie">Filmovi</button>
+  <button class="type-btn" data-type="tv">Serije</button>
+</div>
+
 <!-- Search bar -->
 <div id="search-bar">
-  <input id="search-input" type="search" placeholder="Pretraži film po imenu…" autocomplete="off">
+  <input id="search-input" type="search" placeholder="Pretraži po imenu…" autocomplete="off">
   <button id="search-btn">Pretraži</button>
   <button id="clear-search-btn">✕ Povratak</button>
 </div>
@@ -551,8 +581,9 @@ let currentPage    = 1;
 let totalPages     = 1;
 let activeProvider = 0;   // 0 = all
 let sortBy         = 'popularity.desc';
-let movieProviders = {};  // movieId → Set of provider ids
+let movieProviders = {};  // id → Set of provider ids
 let searchQuery    = '';  // empty = browse mode
+let contentType    = 'movie'; // 'movie' | 'tv'
 
 // ── DOM refs ─────────────────────────────────────────
 const grid           = document.getElementById('grid');
@@ -568,6 +599,7 @@ const searchInput    = document.getElementById('search-input');
 const searchBtn      = document.getElementById('search-btn');
 const clearSearchBtn = document.getElementById('clear-search-btn');
 const controls       = document.getElementById('controls');
+const typeToggle     = document.getElementById('type-toggle');
 
 // ── API ──────────────────────────────────────────────
 async function tmdb(path, params = {}) {
@@ -583,12 +615,12 @@ async function tmdb(path, params = {}) {
   return res.json();
 }
 
-// fetch movie provider data for a list of movie ids
-async function fetchMovieProviders(ids) {
+// fetch provider data for a list of movie/tv ids
+async function fetchProviders(ids, type) {
   const results = {};
   await Promise.all(ids.map(async id => {
     try {
-      const data = await tmdb(`/movie/${id}/watch/providers`);
+      const data = await tmdb(`/${type}/${id}/watch/providers`);
       const hr = data.results?.HR;
       if (!hr) { results[id] = new Set(); return; }
       const all = [
@@ -618,13 +650,18 @@ async function loadMovies() {
 }
 
 async function discoverMovies() {
+  const isTV = contentType === 'tv';
   showSpinner();
-  setStatus('Dohvaćam filmove…', false);
+  setStatus(isTV ? 'Dohvaćam serije…' : 'Dohvaćam filmove…', false);
 
   try {
+    // TV koristi first_air_date.desc umjesto primary_release_date.desc
+    const mappedSort = (isTV && sortBy === 'primary_release_date.desc')
+      ? 'first_air_date.desc' : sortBy;
+
     const params = {
       page: currentPage,
-      sort_by: sortBy,
+      sort_by: mappedSort,
       watch_region: REGION,
       'vote_count.gte': 50,
     };
@@ -635,46 +672,49 @@ async function discoverMovies() {
       params.with_watch_providers = PROVIDER_IDS.join('|');
     }
 
-    const data = await tmdb('/discover/movie', params);
+    const data = await tmdb(isTV ? '/discover/tv' : '/discover/movie', params);
     totalPages = Math.min(data.total_pages, 100);
 
-    const movies = data.results || [];
-    const ids = movies.map(m => m.id);
-    movieProviders = await fetchMovieProviders(ids);
+    const items = data.results || [];
+    const ids = items.map(m => m.id);
+    movieProviders = await fetchProviders(ids, contentType);
 
-    renderMovies(movies);
+    renderMovies(items);
     updatePagination();
-    setStatus(`${data.total_results.toLocaleString('hr-HR')} filmova pronađeno · stranica ${currentPage} / ${totalPages}`, false);
+    const label = isTV ? 'serija' : 'filmova';
+    setStatus(`${data.total_results.toLocaleString('hr-HR')} ${label} pronađeno · stranica ${currentPage} / ${totalPages}`, false);
   } catch (err) {
     showError(err.message);
   }
 }
 
 async function searchMovies() {
+  const isTV = contentType === 'tv';
   showSpinner();
   setStatus('Pretražujem…', false);
 
   try {
-    const data = await tmdb('/search/movie', {
+    const endpoint = isTV ? '/search/tv' : '/search/movie';
+    const data = await tmdb(endpoint, {
       query: searchQuery,
       page: currentPage,
       include_adult: false,
     });
 
     totalPages = Math.min(data.total_pages || 1, 100);
-    const movies = data.results || [];
+    const items = data.results || [];
 
-    if (movies.length === 0) {
-      grid.innerHTML = '<p style="grid-column:1/-1;color:var(--muted);padding:40px 0;text-align:center">Nema rezultata za traženi film.</p>';
+    if (items.length === 0) {
+      grid.innerHTML = '<p style="grid-column:1/-1;color:var(--muted);padding:40px 0;text-align:center">Nema rezultata za traženi naslov.</p>';
       setStatus('Nema rezultata.', false);
       updatePagination();
       return;
     }
 
-    const ids = movies.map(m => m.id);
-    movieProviders = await fetchMovieProviders(ids);
+    const ids = items.map(m => m.id);
+    movieProviders = await fetchProviders(ids, contentType);
 
-    renderMovies(movies);
+    renderMovies(items);
     updatePagination();
     setStatus(`${data.total_results.toLocaleString('hr-HR')} rezultata za „${searchQuery}" · stranica ${currentPage} / ${totalPages}`, false);
   } catch (err) {
@@ -682,36 +722,38 @@ async function searchMovies() {
   }
 }
 
-function renderMovies(movies) {
+function renderMovies(items) {
   grid.innerHTML = '';
 
-  if (movies.length === 0) {
-    grid.innerHTML = '<p style="grid-column:1/-1;color:var(--muted);padding:40px 0;text-align:center">Nema filmova za odabrane filtere.</p>';
+  if (items.length === 0) {
+    grid.innerHTML = '<p style="grid-column:1/-1;color:var(--muted);padding:40px 0;text-align:center">Nema rezultata za odabrane filtere.</p>';
     return;
   }
 
-  movies.forEach(movie => {
+  const type = contentType;
+  items.forEach(item => {
     const card = document.createElement('div');
     card.className = 'card';
 
-    const provSet = movieProviders[movie.id] || new Set();
+    const provSet = movieProviders[item.id] || new Set();
     const seenBadges = new Set();
     const badges = PROVIDER_IDS
       .filter(id => provSet.has(id) && !seenBadges.has(PROVIDERS[id].badge) && seenBadges.add(PROVIDERS[id].badge))
       .map(id => `<span class="badge badge-${PROVIDERS[id].badge}">${PROVIDERS[id].name}</span>`)
       .join('');
 
-    const year = movie.release_date ? movie.release_date.slice(0, 4) : '—';
-    const rating = movie.vote_average ? movie.vote_average.toFixed(1) : '—';
+    const title  = item.title || item.name || '—';
+    const year   = (item.release_date || item.first_air_date || '').slice(0, 4) || '—';
+    const rating = item.vote_average ? item.vote_average.toFixed(1) : '—';
 
-    const posterHtml = movie.poster_path
-      ? `<img class="card-poster" src="${IMG_BASE}${movie.poster_path}" alt="${escHtml(movie.title)}" loading="lazy">`
+    const posterHtml = item.poster_path
+      ? `<img class="card-poster" src="${IMG_BASE}${item.poster_path}" alt="${escHtml(title)}" loading="lazy">`
       : `<div class="card-poster no-poster">🎬</div>`;
 
     card.innerHTML = `
       ${posterHtml}
       <div class="card-body">
-        <div class="card-title">${escHtml(movie.title)}</div>
+        <div class="card-title">${escHtml(title)}</div>
         <div class="card-meta">
           <span>${year}</span>
           <span class="rating">★ ${rating}</span>
@@ -720,22 +762,32 @@ function renderMovies(movies) {
       ${badges ? `<div class="badges">${badges}</div>` : ''}
     `;
 
-    card.addEventListener('click', () => openModal(movie.id));
+    card.addEventListener('click', () => openModal(item.id, type));
     grid.appendChild(card);
   });
 }
 
 // ── Modal ────────────────────────────────────────────
-async function openModal(movieId) {
+async function openModal(itemId, type = 'movie') {
   modalInner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Učitavam…</div>';
   modalOverlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 
   try {
     const [detail, providers] = await Promise.all([
-      tmdb(`/movie/${movieId}`),
-      tmdb(`/movie/${movieId}/watch/providers`),
+      tmdb(`/${type}/${itemId}`),
+      tmdb(`/${type}/${itemId}/watch/providers`),
     ]);
+
+    // Engleski fallback ako nema hrvatskog opisa
+    let overview = detail.overview;
+    if (!overview) {
+      try {
+        const en = await tmdb(`/${type}/${itemId}`, { language: 'en-US' });
+        overview = en.overview || '';
+      } catch { /* ignore */ }
+    }
+    if (!overview) overview = 'Nema opisa.';
 
     const hr = providers.results?.HR;
     const providerList = hr
@@ -756,20 +808,29 @@ async function openModal(movieId) {
       .map(g => `<span class="genre-tag">${escHtml(g.name)}</span>`)
       .join('');
 
-    const year     = detail.release_date ? detail.release_date.slice(0, 4) : '—';
-    const runtime  = detail.runtime ? `${Math.floor(detail.runtime / 60)}h ${detail.runtime % 60}m` : null;
-    const rating   = detail.vote_average ? `★ ${detail.vote_average.toFixed(1)} / 10` : '';
-    const votes    = detail.vote_count ? `(${detail.vote_count.toLocaleString('hr-HR')} glasova)` : '';
-    const overview = detail.overview || 'Nema opisa na hrvatskom.';
+    const title  = detail.title || detail.name || '—';
+    const year   = (detail.release_date || detail.first_air_date || '').slice(0, 4) || '—';
+    const rating = detail.vote_average ? `★ ${detail.vote_average.toFixed(1)} / 10` : '';
+    const votes  = detail.vote_count ? `(${detail.vote_count.toLocaleString('hr-HR')} glasova)` : '';
+
+    let runtime = null;
+    if (type === 'tv') {
+      if (detail.number_of_seasons) {
+        const s = detail.number_of_seasons;
+        runtime = `${s} ${s === 1 ? 'sezona' : 'sezone/a'}`;
+      }
+    } else {
+      if (detail.runtime) runtime = `${Math.floor(detail.runtime / 60)}h ${detail.runtime % 60}m`;
+    }
 
     const posterHtml = detail.poster_path
-      ? `<img src="${IMG_BASE}${detail.poster_path}" alt="${escHtml(detail.title)}" loading="lazy">`
+      ? `<img src="${IMG_BASE}${detail.poster_path}" alt="${escHtml(title)}" loading="lazy">`
       : `<div class="no-poster-icon">🎬</div>`;
 
     modalInner.innerHTML = `
       <div class="modal-poster">${posterHtml}</div>
       <div class="modal-info">
-        <div class="modal-title">${escHtml(detail.title)}</div>
+        <div class="modal-title">${escHtml(title)}</div>
         ${detail.tagline ? `<div class="modal-tagline">${escHtml(detail.tagline)}</div>` : ''}
         <div class="modal-meta">
           <span>${year}</span>
@@ -863,6 +924,17 @@ function escHtml(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── Type toggle events ────────────────────────────────
+typeToggle.querySelectorAll('.type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    typeToggle.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    contentType = btn.dataset.type;
+    currentPage = 1;
+    loadMovies();
+  });
+});
 
 // ── Search events ─────────────────────────────────────
 function doSearch() {
