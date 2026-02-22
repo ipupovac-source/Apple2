@@ -309,19 +309,28 @@
       max-width: 660px;
       width: 100%;
       max-height: 90vh;
-      overflow-y: auto;
+      overflow: hidden;
       position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-scroll {
+      overflow-y: auto;
+      flex: 1;
     }
 
     .modal-close {
-      position: absolute; top: 12px; right: 14px;
+      position: absolute; top: 0; right: 0;
+      padding: 16px 20px;
       background: none; border: none;
       color: var(--muted); font-size: 1.4rem;
       cursor: pointer; line-height: 1;
-      z-index: 1;
+      z-index: 2;
+      border-radius: 0 12px 0 0;
     }
 
-    .modal-close:hover { color: var(--text); }
+    .modal-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
 
     .modal-inner {
       display: flex;
@@ -546,7 +555,9 @@
 <div id="modal-overlay">
   <div id="modal">
     <button class="modal-close" id="modal-close">✕</button>
-    <div class="modal-inner" id="modal-inner"></div>
+    <div class="modal-scroll">
+      <div class="modal-inner" id="modal-inner"></div>
+    </div>
   </div>
 </div>
 
