@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Filmovi u Hrvatskoj — Netflix, HBO, Prime, SkyShowtime</title>
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #1a1a1a;
+      --surface2: #242424;
+      --border: #2e2e2e;
+      --text: #e8e8e8;
+      --muted: #888;
+      --netflix: #e50914;
+      --hbo: #8b008b;
+      --prime: #00a8e0;
+      --sky: #0070cc;
+      --gold: #f5c518;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    header h1 span { color: var(--gold); }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ── API key banner ──────────────────────────────── */
+    #api-banner {
+      background: #1c1a00;
+      border-bottom: 1px solid #555200;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #api-banner label { color: #ccc; font-size: 0.85rem; white-space: nowrap; }
+
+    #api-key-input {
+      flex: 1;
+      min-width: 260px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      font-family: monospace;
+    }
+
+    #api-key-input:focus { outline: none; border-color: var(--gold); }
+
+    #api-banner a {
+      color: var(--gold);
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    /* ── Controls ────────────────────────────────────── */
+    #controls {
+      padding: 16px 24px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filter-btn {
+      border: none;
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      opacity: 0.55;
+    }
+
+    .filter-btn.active { opacity: 1; transform: scale(1.04); }
+    .filter-btn:hover { opacity: 0.85; }
+
+    .btn-all      { background: var(--text); color: #000; }
+    .btn-netflix  { background: var(--netflix); color: #fff; }
+    .btn-hbo      { background: var(--hbo); color: #fff; }
+    .btn-prime    { background: var(--prime); color: #fff; }
+    .btn-sky      { background: var(--sky); color: #fff; }
+
+    .sort-select {
+      margin-left: auto;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .sort-select:focus { outline: none; border-color: var(--gold); }
+
+    /* ── Status bar ──────────────────────────────────── */
+    #status {
+      padding: 10px 24px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      min-height: 34px;
+    }
+
+    #status.error { color: #ff6b6b; }
+
+    /* ── Grid ────────────────────────────────────────── */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      padding: 0 24px 40px;
+    }
+
+    /* ── Movie card ──────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #555;
+    }
+
+    .card-poster {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      display: block;
+      background: var(--surface2);
+    }
+
+    .card-poster.no-poster {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+
+    .card-body {
+      padding: 10px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .card-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: auto;
+    }
+
+    .rating {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      padding: 0 10px 10px;
+    }
+
+    .badge {
+      border-radius: 3px;
+      padding: 2px 6px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-netflix  { background: var(--netflix); color: #fff; }
+    .badge-hbo      { background: var(--hbo); color: #fff; }
+    .badge-prime    { background: var(--prime); color: #fff; }
+    .badge-sky      { background: var(--sky); color: #fff; }
+
+    /* ── Spinner ─────────────────────────────────────── */
+    .spinner-wrap {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
+      padding: 60px 0;
+    }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Pagination ──────────────────────────────────── */
+    #pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 24px 40px;
+    }
+
+    .page-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 8px 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .page-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    #page-info { font-size: 0.85rem; color: var(--muted); }
+
+    /* ── Modal ───────────────────────────────────────── */
+    #modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.82);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #modal-overlay.open { display: flex; }
+
+    #modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      max-width: 660px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none;
+      color: var(--muted); font-size: 1.4rem;
+      cursor: pointer; line-height: 1;
+      z-index: 1;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .modal-inner {
+      display: flex;
+      gap: 20px;
+      padding: 24px;
+    }
+
+    .modal-poster {
+      width: 140px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--surface2);
+      aspect-ratio: 2/3;
+    }
+
+    .modal-poster img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    .modal-poster .no-poster-icon {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem;
+    }
+
+    .modal-info { flex: 1; }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      padding-right: 24px;
+    }
+
+    .modal-tagline {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+
+    .modal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .modal-meta .rating { font-size: 0.85rem; }
+
+    .modal-overview {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #ccc;
+      margin-bottom: 14px;
+    }
+
+    .modal-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .modal-genres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .genre-tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.73rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 480px) {
+      .modal-inner { flex-direction: column; }
+      .modal-poster { width: 100%; max-width: 160px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Filmovi <span>HR</span></h1>
+  <small style="color:var(--muted)">Streaming dostupan u Hrvatskoj</small>
+</header>
+
+<!-- API key input -->
+<div id="api-banner">
+  <label for="api-key-input">🔑 TMDB API ključ:</label>
+  <input id="api-key-input" type="password" placeholder="Unesi svoj besplatni API ključ s themoviedb.org…" autocomplete="off">
+  <button id="load-btn" style="
+    background:var(--gold);color:#000;border:none;border-radius:var(--radius);
+    padding:7px 16px;font-weight:700;cursor:pointer;font-size:0.85rem;">
+    Učitaj
+  </button>
+  <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">
+    Besplatni ključ →
+  </a>
+</div>
+
+<!-- Platform filters + sort -->
+<div id="controls">
+  <button class="filter-btn btn-all active"     data-provider="0">Sve platforme</button>
+  <button class="filter-btn btn-netflix"        data-provider="8">Netflix</button>
+  <button class="filter-btn btn-hbo"            data-provider="384">HBO Max</button>
+  <button class="filter-btn btn-prime"          data-provider="119">Prime Video</button>
+  <button class="filter-btn btn-sky"            data-provider="1773">SkyShowtime</button>
+
+  <select id="sort-select" class="sort-select">
+    <option value="popularity.desc">Popularnost ↓</option>
+    <option value="vote_average.desc">Ocjena ↓</option>
+    <option value="primary_release_date.desc">Najnoviji</option>
+  </select>
+</div>
+
+<div id="status">Unesite TMDB API ključ i kliknite Učitaj.</div>
+
+<div id="grid"></div>
+
+<div id="pagination">
+  <button class="page-btn" id="prev-btn" disabled>← Prethodna</button>
+  <span id="page-info"></span>
+  <button class="page-btn" id="next-btn" disabled>Sljedeća →</button>
+</div>
+
+<!-- Detail modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div class="modal-inner" id="modal-inner"></div>
+  </div>
+</div>
+
+<script>
+// ── Config ───────────────────────────────────────────
+const TMDB_BASE   = 'https://api.themoviedb.org/3';
+const IMG_BASE    = 'https://image.tmdb.org/t/p/w342';
+const REGION      = 'HR';
+
+const PROVIDERS = {
+  0:    { name: 'Sve platforme', badge: null },
+  8:    { name: 'Netflix',       badge: 'netflix' },
+  384:  { name: 'HBO Max',       badge: 'hbo' },
+  119:  { name: 'Prime Video',   badge: 'prime' },
+  1773: { name: 'SkyShowtime',   badge: 'sky' },
+};
+
+const PROVIDER_IDS = [8, 384, 119, 1773];
+
+// ── State ────────────────────────────────────────────
+let apiKey         = '';
+let currentPage    = 1;
+let totalPages     = 1;
+let activeProvider = 0;   // 0 = all
+let sortBy         = 'popularity.desc';
+let movieProviders = {};  // movieId → Set of provider ids
+
+// ── DOM refs ─────────────────────────────────────────
+const grid         = document.getElementById('grid');
+const status       = document.getElementById('status');
+const pageInfo     = document.getElementById('page-info');
+const prevBtn      = document.getElementById('prev-btn');
+const nextBtn      = document.getElementById('next-btn');
+const modalOverlay = document.getElementById('modal-overlay');
+const modalInner   = document.getElementById('modal-inner');
+const apiInput     = document.getElementById('api-key-input');
+const loadBtn      = document.getElementById('load-btn');
+
+// ── API ──────────────────────────────────────────────
+async function tmdb(path, params = {}) {
+  const url = new URL(`${TMDB_BASE}${path}`);
+  url.searchParams.set('api_key', apiKey);
+  url.searchParams.set('language', 'hr-HR');
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.status_message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// fetch movie provider data for a list of movie ids
+async function fetchMovieProviders(ids) {
+  const results = {};
+  await Promise.all(ids.map(async id => {
+    try {
+      const data = await tmdb(`/movie/${id}/watch/providers`);
+      const hr = data.results?.HR;
+      if (!hr) { results[id] = new Set(); return; }
+      const all = [
+        ...(hr.flatrate || []),
+        ...(hr.buy || []),
+        ...(hr.rent || []),
+      ];
+      results[id] = new Set(all.map(p => p.provider_id));
+    } catch {
+      results[id] = new Set();
+    }
+  }));
+  return results;
+}
+
+// ── Fetch & render ───────────────────────────────────
+async function loadMovies() {
+  if (!apiKey) {
+    setStatus('Unesite TMDB API ključ i kliknite Učitaj.', false);
+    return;
+  }
+
+  showSpinner();
+  setStatus('Dohvaćam filmove…', false);
+
+  try {
+    const params = {
+      page: currentPage,
+      sort_by: sortBy,
+      watch_region: REGION,
+      'vote_count.gte': 50,
+    };
+
+    if (activeProvider !== 0) {
+      params.with_watch_providers = activeProvider;
+    } else {
+      params.with_watch_providers = PROVIDER_IDS.join('|');
+    }
+
+    const data = await tmdb('/discover/movie', params);
+    totalPages = Math.min(data.total_pages, 100);
+
+    const movies = data.results || [];
+
+    // fetch provider data for each movie
+    const ids = movies.map(m => m.id);
+    movieProviders = await fetchMovieProviders(ids);
+
+    renderMovies(movies);
+    updatePagination();
+    setStatus(`${data.total_results.toLocaleString('hr-HR')} filmova pronađeno · stranica ${currentPage} / ${totalPages}`, false);
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function renderMovies(movies) {
+  grid.innerHTML = '';
+
+  if (movies.length === 0) {
+    grid.innerHTML = '<p style="grid-column:1/-1;color:var(--muted);padding:40px 0;text-align:center">Nema filmova za odabrane filtere.</p>';
+    return;
+  }
+
+  movies.forEach(movie => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const provSet = movieProviders[movie.id] || new Set();
+    const badges = PROVIDER_IDS
+      .filter(id => provSet.has(id))
+      .map(id => `<span class="badge badge-${PROVIDERS[id].badge}">${PROVIDERS[id].name}</span>`)
+      .join('');
+
+    const year = movie.release_date ? movie.release_date.slice(0, 4) : '—';
+    const rating = movie.vote_average ? movie.vote_average.toFixed(1) : '—';
+
+    const posterHtml = movie.poster_path
+      ? `<img class="card-poster" src="${IMG_BASE}${movie.poster_path}" alt="${escHtml(movie.title)}" loading="lazy">`
+      : `<div class="card-poster no-poster">🎬</div>`;
+
+    card.innerHTML = `
+      ${posterHtml}
+      <div class="card-body">
+        <div class="card-title">${escHtml(movie.title)}</div>
+        <div class="card-meta">
+          <span>${year}</span>
+          <span class="rating">★ ${rating}</span>
+        </div>
+      </div>
+      ${badges ? `<div class="badges">${badges}</div>` : ''}
+    `;
+
+    card.addEventListener('click', () => openModal(movie.id));
+    grid.appendChild(card);
+  });
+}
+
+// ── Modal ────────────────────────────────────────────
+async function openModal(movieId) {
+  modalInner.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Učitavam…</div>';
+  modalOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const [detail, providers] = await Promise.all([
+      tmdb(`/movie/${movieId}`),
+      tmdb(`/movie/${movieId}/watch/providers`),
+    ]);
+
+    const hr = providers.results?.HR;
+    const providerList = hr
+      ? [...new Set([
+          ...(hr.flatrate || []),
+          ...(hr.buy || []),
+          ...(hr.rent || []),
+        ].map(p => p.provider_id))]
+      : [];
+
+    const badges = providerList
+      .filter(id => PROVIDERS[id])
+      .map(id => `<span class="badge badge-${PROVIDERS[id].badge}" style="font-size:0.75rem;padding:3px 10px">${PROVIDERS[id].name}</span>`)
+      .join('');
+
+    const genres = (detail.genres || [])
+      .map(g => `<span class="genre-tag">${escHtml(g.name)}</span>`)
+      .join('');
+
+    const year     = detail.release_date ? detail.release_date.slice(0, 4) : '—';
+    const runtime  = detail.runtime ? `${Math.floor(detail.runtime / 60)}h ${detail.runtime % 60}m` : null;
+    const rating   = detail.vote_average ? `★ ${detail.vote_average.toFixed(1)} / 10` : '';
+    const votes    = detail.vote_count ? `(${detail.vote_count.toLocaleString('hr-HR')} glasova)` : '';
+    const overview = detail.overview || 'Nema opisa na hrvatskom.';
+
+    const posterHtml = detail.poster_path
+      ? `<img src="${IMG_BASE}${detail.poster_path}" alt="${escHtml(detail.title)}" loading="lazy">`
+      : `<div class="no-poster-icon">🎬</div>`;
+
+    modalInner.innerHTML = `
+      <div class="modal-poster">${posterHtml}</div>
+      <div class="modal-info">
+        <div class="modal-title">${escHtml(detail.title)}</div>
+        ${detail.tagline ? `<div class="modal-tagline">${escHtml(detail.tagline)}</div>` : ''}
+        <div class="modal-meta">
+          <span>${year}</span>
+          ${runtime ? `<span>${runtime}</span>` : ''}
+          <span class="rating">${rating}</span>
+          <span style="color:var(--muted);font-size:0.75rem">${votes}</span>
+        </div>
+        ${genres ? `<div class="modal-genres">${genres}</div>` : ''}
+        <p class="modal-overview">${escHtml(overview)}</p>
+        ${badges ? `<div class="modal-badges">${badges}</div>` : '<p style="font-size:0.78rem;color:var(--muted)">Nije dostupno ni na jednoj od traženih platforma u HR.</p>'}
+      </div>
+    `;
+  } catch (err) {
+    modalInner.innerHTML = `<p style="padding:24px;color:#ff6b6b">Greška: ${escHtml(err.message)}</p>`;
+  }
+}
+
+function closeModal() {
+  modalOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Pagination ───────────────────────────────────────
+function updatePagination() {
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
+  pageInfo.textContent = totalPages > 0 ? `${currentPage} / ${totalPages}` : '';
+}
+
+prevBtn.addEventListener('click', () => { currentPage--; window.scrollTo(0, 0); loadMovies(); });
+nextBtn.addEventListener('click', () => { currentPage++; window.scrollTo(0, 0); loadMovies(); });
+
+// ── Filter & sort events ─────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeProvider = parseInt(btn.dataset.provider, 10);
+    currentPage = 1;
+    loadMovies();
+  });
+});
+
+document.getElementById('sort-select').addEventListener('change', e => {
+  sortBy = e.target.value;
+  currentPage = 1;
+  loadMovies();
+});
+
+// ── Load button ──────────────────────────────────────
+loadBtn.addEventListener('click', () => {
+  apiKey = apiInput.value.trim();
+  if (!apiKey) { setStatus('Unesite API ključ.', true); return; }
+  // persist in sessionStorage for convenience
+  sessionStorage.setItem('tmdb_key', apiKey);
+  currentPage = 1;
+  loadMovies();
+});
+
+apiInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadBtn.click(); });
+
+// restore saved key
+const savedKey = sessionStorage.getItem('tmdb_key');
+if (savedKey) {
+  apiInput.value = savedKey;
+  apiKey = savedKey;
+}
+
+// ── Modal events ─────────────────────────────────────
+document.getElementById('modal-close').addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Helpers ──────────────────────────────────────────
+function showSpinner() {
+  grid.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+}
+
+function setStatus(msg, isError) {
+  status.textContent = msg;
+  status.className = isError ? 'error' : '';
+}
+
+function showError(msg) {
+  grid.innerHTML = '';
+  setStatus(`Greška: ${msg}`, true);
+  updatePagination();
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Auto-load if key was restored
+if (apiKey) loadMovies();
+</script>
+</body>
+</html>
