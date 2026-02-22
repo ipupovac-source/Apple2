@@ -392,6 +392,55 @@
       color: var(--muted);
     }
 
+    /* ── Search bar ──────────────────────────────────── */
+    #search-bar {
+      padding: 12px 24px;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #search-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 8px 14px;
+      font-size: 0.9rem;
+    }
+
+    #search-input:focus { outline: none; border-color: var(--gold); }
+
+    #search-btn {
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: var(--radius);
+      padding: 8px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    #clear-search-btn {
+      display: none;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    #controls.search-mode {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
     @media (max-width: 480px) {
       .modal-inner { flex-direction: column; }
       .modal-poster { width: 100%; max-width: 160px; }
@@ -417,6 +466,13 @@
   <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">
     Besplatni ključ →
   </a>
+</div>
+
+<!-- Search bar -->
+<div id="search-bar">
+  <input id="search-input" type="search" placeholder="Pretraži film po imenu…" autocomplete="off">
+  <button id="search-btn">Pretraži</button>
+  <button id="clear-search-btn">✕ Povratak</button>
 </div>
 
 <!-- Platform filters + sort -->
@@ -475,17 +531,22 @@ let totalPages     = 1;
 let activeProvider = 0;   // 0 = all
 let sortBy         = 'popularity.desc';
 let movieProviders = {};  // movieId → Set of provider ids
+let searchQuery    = '';  // empty = browse mode
 
 // ── DOM refs ─────────────────────────────────────────
-const grid         = document.getElementById('grid');
-const status       = document.getElementById('status');
-const pageInfo     = document.getElementById('page-info');
-const prevBtn      = document.getElementById('prev-btn');
-const nextBtn      = document.getElementById('next-btn');
-const modalOverlay = document.getElementById('modal-overlay');
-const modalInner   = document.getElementById('modal-inner');
-const apiInput     = document.getElementById('api-key-input');
-const loadBtn      = document.getElementById('load-btn');
+const grid           = document.getElementById('grid');
+const status         = document.getElementById('status');
+const pageInfo       = document.getElementById('page-info');
+const prevBtn        = document.getElementById('prev-btn');
+const nextBtn        = document.getElementById('next-btn');
+const modalOverlay   = document.getElementById('modal-overlay');
+const modalInner     = document.getElementById('modal-inner');
+const apiInput       = document.getElementById('api-key-input');
+const loadBtn        = document.getElementById('load-btn');
+const searchInput    = document.getElementById('search-input');
+const searchBtn      = document.getElementById('search-btn');
+const clearSearchBtn = document.getElementById('clear-search-btn');
+const controls       = document.getElementById('controls');
 
 // ── API ──────────────────────────────────────────────
 async function tmdb(path, params = {}) {
@@ -528,7 +589,14 @@ async function loadMovies() {
     setStatus('Unesite TMDB API ključ i kliknite Učitaj.', false);
     return;
   }
+  if (searchQuery) {
+    await searchMovies();
+  } else {
+    await discoverMovies();
+  }
+}
 
+async function discoverMovies() {
   showSpinner();
   setStatus('Dohvaćam filmove…', false);
 
@@ -550,14 +618,44 @@ async function loadMovies() {
     totalPages = Math.min(data.total_pages, 100);
 
     const movies = data.results || [];
-
-    // fetch provider data for each movie
     const ids = movies.map(m => m.id);
     movieProviders = await fetchMovieProviders(ids);
 
     renderMovies(movies);
     updatePagination();
     setStatus(`${data.total_results.toLocaleString('hr-HR')} filmova pronađeno · stranica ${currentPage} / ${totalPages}`, false);
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+async function searchMovies() {
+  showSpinner();
+  setStatus('Pretražujem…', false);
+
+  try {
+    const data = await tmdb('/search/movie', {
+      query: searchQuery,
+      page: currentPage,
+      include_adult: false,
+    });
+
+    totalPages = Math.min(data.total_pages || 1, 100);
+    const movies = data.results || [];
+
+    if (movies.length === 0) {
+      grid.innerHTML = '<p style="grid-column:1/-1;color:var(--muted);padding:40px 0;text-align:center">Nema rezultata za traženi film.</p>';
+      setStatus('Nema rezultata.', false);
+      updatePagination();
+      return;
+    }
+
+    const ids = movies.map(m => m.id);
+    movieProviders = await fetchMovieProviders(ids);
+
+    renderMovies(movies);
+    updatePagination();
+    setStatus(`${data.total_results.toLocaleString('hr-HR')} rezultata za „${searchQuery}" · stranica ${currentPage} / ${totalPages}`, false);
   } catch (err) {
     showError(err.message);
   }
@@ -742,6 +840,30 @@ function escHtml(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── Search events ─────────────────────────────────────
+function doSearch() {
+  const q = searchInput.value.trim();
+  if (!q) return;
+  searchQuery = q;
+  currentPage = 1;
+  clearSearchBtn.style.display = '';
+  controls.classList.add('search-mode');
+  loadMovies();
+}
+
+function clearSearch() {
+  searchQuery = '';
+  searchInput.value = '';
+  clearSearchBtn.style.display = 'none';
+  controls.classList.remove('search-mode');
+  currentPage = 1;
+  loadMovies();
+}
+
+searchBtn.addEventListener('click', doSearch);
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+clearSearchBtn.addEventListener('click', clearSearch);
 
 // Auto-load if key was restored
 if (apiKey) loadMovies();
