@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Filmovi u Hrvatskoj — Netflix, Max, Prime, Disney+, Apple TV+, SkyShowtime, Mubi</title>
+  <title>Filmovi u Hrvatskoj — Netflix, Max, Prime, Disney+, SkyShowtime, Mubi</title>
   <style>
     :root {
       --bg: #0d0d0d;
@@ -17,7 +17,7 @@
       --prime: #00a8e0;
       --sky: #0070cc;
       --disney: #0063e5;
-      --apple: #555e6c;
+
       --mubi: #a6192e;
       --gold: #f5c518;
       --radius: 8px;
@@ -122,7 +122,7 @@
     .btn-prime    { background: var(--prime); color: #fff; }
     .btn-sky      { background: var(--sky); color: #fff; }
     .btn-disney   { background: var(--disney); color: #fff; }
-    .btn-apple    { background: var(--apple); color: #fff; }
+
     .btn-mubi     { background: var(--mubi); color: #fff; }
 
     .sort-select {
@@ -244,7 +244,7 @@
     .badge-prime    { background: var(--prime); color: #fff; }
     .badge-sky      { background: var(--sky); color: #fff; }
     .badge-disney   { background: var(--disney); color: #fff; }
-    .badge-apple    { background: var(--apple); color: #fff; }
+
     .badge-mubi     { background: var(--mubi); color: #fff; }
 
     /* ── Spinner ─────────────────────────────────────── */
@@ -491,7 +491,7 @@
   <button class="filter-btn btn-hbo"            data-provider="1899">Max</button>
   <button class="filter-btn btn-disney"         data-provider="337">Disney+</button>
   <button class="filter-btn btn-prime"          data-provider="119">Prime Video</button>
-  <button class="filter-btn btn-apple"          data-provider="350">Apple TV+</button>
+
   <button class="filter-btn btn-sky"            data-provider="1773">SkyShowtime</button>
   <button class="filter-btn btn-mubi"           data-provider="11">Mubi</button>
 
@@ -533,7 +533,7 @@ const PROVIDERS = {
   1899: { name: 'Max',           badge: 'hbo' },   // novi Max ID (rebrand 2023.)
   337:  { name: 'Disney+',       badge: 'disney' },
   119:  { name: 'Prime Video',   badge: 'prime' },
-  350:  { name: 'Apple TV+',     badge: 'apple' },
+
   1773: { name: 'SkyShowtime',   badge: 'sky' },
   11:   { name: 'Mubi',          badge: 'mubi' },
 };
@@ -543,7 +543,7 @@ const PROVIDER_QUERY = {
   1899: '384|1899',
 };
 
-const PROVIDER_IDS = [8, 384, 1899, 337, 119, 350, 1773, 11];
+const PROVIDER_IDS = [8, 384, 1899, 337, 119, 1773, 11];
 
 // ── State ────────────────────────────────────────────
 let apiKey         = '';
