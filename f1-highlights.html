@@ -644,6 +644,130 @@
       .reports-wrap { padding: 14px; }
       .reports-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── Detail modal ─────────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 100;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px 24px;
+      overflow-y: auto;
+      backdrop-filter: blur(2px);
+      animation: fadein .15s ease;
+    }
+    @keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
+
+    .modal-panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+      animation: slidein .18s ease;
+      flex-shrink: 0;
+    }
+    @keyframes slidein { from { transform: translateY(-16px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+    .modal-hdr {
+      padding: 14px 16px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-color-bar {
+      width: 4px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      align-self: stretch;
+      min-height: 36px;
+    }
+    .modal-hdr-body { flex: 1; min-width: 0; }
+    .modal-hdr-title {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .modal-hdr-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: color .12s;
+      margin-top: -1px;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-stats {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-stat {
+      flex: 1;
+      padding: 10px 14px;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+    .modal-stat:last-child { border-right: none; }
+    .modal-stat-val {
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: monospace;
+      line-height: 1.2;
+    }
+    .modal-stat-lbl {
+      font-size: 0.6rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    .modal-section-hdr {
+      padding: 9px 16px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+    .modal-body { max-height: 52vh; overflow-y: auto; }
+
+    /* Moment list inside modal */
+    .modal-moment-row {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .modal-moment-row:last-child { border-bottom: none; }
+    .modal-moment-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .modal-moment-body { flex: 1; min-width: 0; }
+    .modal-moment-lap { font-size: 0.65rem; color: var(--muted); margin-bottom: 2px; }
+    .modal-moment-msg { font-size: 0.75rem; }
+    .modal-moment-ts { font-size: 0.65rem; color: var(--muted); font-family: monospace; flex-shrink: 0; }
+
+    .clickable { cursor: pointer; transition: background .12s; }
+    .clickable:hover { background: rgba(255,255,255,0.04) !important; }
+    .pos-table tbody tr.clickable:hover td { background: rgba(255,255,255,0.06); }
   </style>
 </head>
 <body>
@@ -718,6 +842,7 @@ const errorMsg   = document.getElementById('errorMsg');
 /* ── Global state ──────────────────────────────────────────────────── */
 let allRadio     = [];
 let allDriverMap = {};
+let allMoments   = [];
 let activeAudio  = null;
 let activeBtn    = null;
 const audios     = {};
@@ -903,6 +1028,7 @@ async function loadSession() {
     allDriverMap = driverMap;
 
     const moments = raceCtrl.filter(isInteresting);
+    allMoments    = moments;
 
     statusBar.style.display = 'flex';
     document.getElementById('stSession').innerHTML  =
@@ -1424,16 +1550,21 @@ function onChartClick(e) {
 }
 
 function toggleChartHighlight(dNum) {
-  CS.highlighted = CS.highlighted === dNum ? null : dNum;
+  const wasHL = CS.highlighted === String(dNum);
+  CS.highlighted = wasHL ? null : String(dNum);
   drawChart(null);
 
   const legend = document.getElementById('legend');
-  if (!legend) return;
-  legend.querySelectorAll('.legend-item').forEach(li => {
-    const isThis = li.dataset.driver === String(dNum);
-    li.classList.toggle('hl',  isThis && CS.highlighted !== null);
-    li.classList.toggle('dim', CS.highlighted !== null && !isThis);
-  });
+  if (legend) {
+    legend.querySelectorAll('.legend-item').forEach(li => {
+      const isThis = li.dataset.driver === String(dNum);
+      li.classList.toggle('hl',  isThis && CS.highlighted !== null);
+      li.classList.toggle('dim', CS.highlighted !== null && !isThis);
+    });
+  }
+
+  if (!wasHL) showDriverDetail(String(dNum));
+  else closeModal();
 }
 
 /* ── Reports ───────────────────────────────────────────────────────── */
@@ -1460,7 +1591,7 @@ function renderReports(moments, radio, driverMap, positions) {
       const start = Math.round(v.firstPos);
       const end   = Math.round(v.lastPos);
       const delta = start - end;  /* positive = gained positions */
-      return { abbr, color, start, end, delta };
+      return { dNum: dn, abbr, color, start, end, delta };
     })
     .sort((a, b) => a.end - b.end);
 
@@ -1471,7 +1602,7 @@ function renderReports(moments, radio, driverMap, positions) {
       </tr></thead>
       <tbody>
         ${posRows.map((r, i) => `
-          <tr>
+          <tr class="clickable" onclick="showDriverDetail('${escAttr(r.dNum)}')" title="Klikni za detalje vozača">
             <td><strong>${i + 1}</strong></td>
             <td><span class="drv-badge" style="border-left-color:${r.color}">${escHtml(r.abbr)}</span></td>
             <td>${r.start}</td>
@@ -1499,7 +1630,7 @@ function renderReports(moments, radio, driverMap, positions) {
       const color = d.team_colour ? `#${d.team_colour}` : '#888';
       const pct   = (cnt / maxCount) * 100;
       return `
-        <div class="radio-bar-row">
+        <div class="radio-bar-row clickable" onclick="showDriverDetail('${escAttr(dn)}')" title="Klikni za sve radio poruke">
           <span class="radio-bar-drv" style="color:${color}">${escHtml(abbr)}</span>
           <div class="radio-bar-track">
             <div class="radio-bar-fill" style="width:${pct}%;background:${color}"></div>
@@ -1519,10 +1650,11 @@ function renderReports(moments, radio, driverMap, positions) {
   const momentHtml = Object.keys(groups).length ? Object.entries(groups)
     .sort((a, b) => b[1].count - a[1].count)
     .map(([label, g]) => `
-      <div class="moment-sum-row">
+      <div class="moment-sum-row clickable" onclick="showMomentTypeDetail('${escAttr(label)}')" title="Klikni za sve događaje ovog tipa">
         <span class="moment-sum-icon">${g.icon}</span>
         <span class="moment-sum-label">${escHtml(label)}</span>
         <span class="moment-sum-count">${g.count}</span>
+        <span style="color:var(--muted);font-size:11px;margin-left:4px">›</span>
       </div>`).join('')
     : `<div class="empty"><p>Nema ključnih trenutaka</p></div>`;
 
@@ -1546,6 +1678,160 @@ function renderReports(moments, radio, driverMap, positions) {
     </div>`;
 }
 
+/* ── Modal ─────────────────────────────────────────────────────────── */
+function openModal(html) {
+  const modal = document.getElementById('detailModal');
+  document.getElementById('modalContent').innerHTML = html;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  /* Stop any modal audio */
+  for (const k in audios) {
+    if (String(k).startsWith('mo-') && !audios[k].paused) {
+      audios[k].pause();
+    }
+  }
+  for (const k in audios) { if (String(k).startsWith('mo-')) delete audios[k]; }
+
+  const modal = document.getElementById('detailModal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+
+  /* Clear chart highlight when closing via X or Escape */
+  if (CS.highlighted) {
+    CS.highlighted = null;
+    drawChart(null);
+    const legend = document.getElementById('legend');
+    if (legend) legend.querySelectorAll('.legend-item').forEach(li => {
+      li.classList.remove('hl', 'dim');
+    });
+  }
+}
+
+function handleModalBackdropClick(e) {
+  if (e.target === document.getElementById('detailModal')) closeModal();
+}
+
+/* ── Driver detail modal ───────────────────────────────────────────── */
+function showDriverDetail(dNum) {
+  /* Clear old modal audios */
+  for (const k in audios) { if (String(k).startsWith('mo-')) delete audios[k]; }
+
+  const d      = allDriverMap[dNum] || CS.driverMap[dNum] || {};
+  const abbr   = d.name_acronym || `#${dNum}`;
+  const name   = d.full_name    || abbr;
+  const team   = d.team_name    || '—';
+  const color  = d.team_colour  ? `#${d.team_colour}` : '#888';
+  const num    = d.driver_number || dNum;
+
+  /* Position stats */
+  let statStart = '—', statBest = '—', statEnd = '—';
+  const posArr = CS.byDriver[dNum] || CS.byDriver[String(dNum)] || [];
+  if (posArr.length) {
+    statStart = `P${Math.round(posArr[0].pos)}`;
+    statEnd   = `P${Math.round(posArr[posArr.length - 1].pos)}`;
+    statBest  = `P${Math.round(Math.min(...posArr.map(p => p.pos)))}`;
+  }
+
+  /* Radio messages for this driver */
+  const driverRadio = allRadio
+    .filter(r => String(r.driver_number) === String(dNum))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const radioRows = driverRadio.map((r, i) => {
+    const id = `mo-${i}`;
+    return `
+      <div style="padding:9px 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:7px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="drv-badge" style="border-left-color:${color}">${escHtml(abbr)}</span>
+          <span class="radio-ts">${fmtTs(r.date)}</span>
+        </div>
+        <div class="radio-player">
+          <button class="play-btn" id="pb-${id}"
+            onclick="togglePlay('${id}', '${escAttr(r.recording_url)}')"
+            title="Reproduciraj">▶</button>
+          <div class="progress-bar" onclick="seekTo(event, this, '${id}')">
+            <div class="progress-fill" id="pf-${id}" style="width:0%"></div>
+          </div>
+          <span class="audio-dur" id="dur-${id}">0:00</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  const radioSection = driverRadio.length
+    ? `<div class="modal-section-hdr">📻 Radio poruke (${driverRadio.length})</div>
+       <div class="modal-body">${radioRows}</div>`
+    : `<div class="modal-section-hdr">📻 Radio poruke</div>
+       <div class="empty" style="padding:20px"><p>Nema radio poruka</p></div>`;
+
+  openModal(`
+    <div class="modal-hdr">
+      <div class="modal-color-bar" style="background:${color}"></div>
+      <div class="modal-hdr-body">
+        <div class="modal-hdr-title">${escHtml(name)}</div>
+        <div class="modal-hdr-sub">#${escHtml(String(num))} &nbsp;·&nbsp; ${escHtml(team)}</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    ${posArr.length ? `
+    <div class="modal-stats">
+      <div class="modal-stat">
+        <div class="modal-stat-val">${statStart}</div>
+        <div class="modal-stat-lbl">Start</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-val" style="color:var(--green)">${statBest}</div>
+        <div class="modal-stat-lbl">Najbolja</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-val">${statEnd}</div>
+        <div class="modal-stat-lbl">Kraj</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-val">${driverRadio.length}</div>
+        <div class="modal-stat-lbl">Radio</div>
+      </div>
+    </div>` : ''}
+    ${radioSection}
+  `);
+}
+
+/* ── Moment type modal ─────────────────────────────────────────────── */
+function showMomentTypeDetail(label) {
+  const filtered = allMoments.filter(m => classify(m).label === label);
+  if (!filtered.length) return;
+
+  const { icon } = classify(filtered[0]);
+
+  const rows = filtered.map(m => {
+    const lap    = m.lap_number ? `Krug ${m.lap_number}` : '';
+    const detail = [lap, m.message].filter(Boolean).join(' · ');
+    return `
+      <div class="modal-moment-row">
+        <span class="modal-moment-icon">${icon}</span>
+        <div class="modal-moment-body">
+          ${lap ? `<div class="modal-moment-lap">${escHtml(lap)}</div>` : ''}
+          <div class="modal-moment-msg">${escHtml(m.message || '—')}</div>
+        </div>
+        <span class="modal-moment-ts">${fmtTs(m.date)}</span>
+      </div>`;
+  }).join('');
+
+  openModal(`
+    <div class="modal-hdr">
+      <div style="font-size:1.4rem;flex-shrink:0">${icon}</div>
+      <div class="modal-hdr-body">
+        <div class="modal-hdr-title">${escHtml(label)}</div>
+        <div class="modal-hdr-sub">${filtered.length} ${filtered.length === 1 ? 'događaj' : 'događaja'} u sesiji</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">${rows}</div>
+  `);
+}
+
 /* ── Utils ─────────────────────────────────────────────────────────── */
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1567,8 +1853,18 @@ sessionSel.addEventListener('change', () => {
 
 loadBtn.addEventListener('click', loadSession);
 
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
 /* ── Init ──────────────────────────────────────────────────────────── */
 loadMeetings(yearSel.value);
 </script>
+
+<!-- ── Detail modal ──────────────────────────────────────────────────── -->
+<div id="detailModal" style="display:none" class="modal-backdrop" onclick="handleModalBackdropClick(event)">
+  <div class="modal-panel" id="modalPanel">
+    <div id="modalContent"></div>
+  </div>
+</div>
+
 </body>
 </html>
