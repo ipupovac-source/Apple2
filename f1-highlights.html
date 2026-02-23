@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>F1 Highlights &amp; Radio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #e10600;
+      --red-dark: #b00500;
+      --bg: #0e0e0e;
+      --bg2: #181818;
+      --bg3: #222;
+      --bg4: #2a2a2a;
+      --text: #f0f0f0;
+      --muted: #777;
+      --border: #2e2e2e;
+      --green: #39d353;
+      --yellow: #f5a623;
+      --danger: #ff453a;
+      --blue: #4c9aff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+      min-height: 100vh;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      background: linear-gradient(to right, #150000, #200000);
+      border-bottom: 3px solid var(--red);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      background: var(--red);
+      color: #fff;
+      font-weight: 900;
+      font-size: 17px;
+      letter-spacing: -1px;
+      width: 40px; height: 40px;
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    header p  { font-size: 0.68rem; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
+
+    /* ── Controls ─────────────────────────────────────────────── */
+    .controls {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+    .ctrl-group label {
+      font-size: 0.62rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    select {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 9px 32px 9px 12px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      min-width: 190px;
+      outline: none;
+      transition: border-color .15s;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%23666' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    select:hover, select:focus { border-color: var(--red); }
+    select:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn {
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 9px 22px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      white-space: nowrap;
+      min-height: 40px;
+    }
+    .btn:hover { background: var(--red-dark); }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Status bar ───────────────────────────────────────────── */
+    #statusBar {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 20px;
+      display: none;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    #statusBar span { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+    /* ── Error ────────────────────────────────────────────────── */
+    #errorMsg {
+      display: none;
+      background: rgba(255,69,58,.1);
+      border: 1px solid rgba(255,69,58,.35);
+      border-radius: 4px;
+      padding: 10px 16px;
+      margin: 12px 20px 0;
+      font-size: 0.78rem;
+      color: var(--danger);
+    }
+
+    /* ── Loading ──────────────────────────────────────────────── */
+    .loading { text-align: center; padding: 80px 24px; color: var(--muted); }
+    .spinner {
+      width: 38px; height: 38px;
+      border: 3px solid var(--border);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Welcome ──────────────────────────────────────────────── */
+    .welcome { padding: 70px 24px; text-align: center; }
+    .welcome .icon { font-size: 3rem; margin-bottom: 14px; }
+    .welcome h2 { font-size: 1.1rem; font-weight: 700; color: var(--red); margin-bottom: 8px; }
+    .welcome p  { color: var(--muted); font-size: 0.82rem; line-height: 1.7; }
+
+    /* ── Mobile tabs ──────────────────────────────────────────── */
+    .mobile-tabs {
+      display: none;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 12px 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: color .15s, border-color .15s;
+    }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--red); }
+
+    /* ── Main two-column grid ─────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .panel {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .panel:last-child { border-right: none; }
+
+    .panel-hdr {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 11px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .panel-hdr h2 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+    }
+    .badge {
+      background: var(--red);
+      color: #fff;
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+    .panel-body { overflow-y: auto; flex: 1; max-height: 560px; }
+
+    /* ── Moments list ─────────────────────────────────────────── */
+    .moment-item {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      cursor: pointer;
+      transition: background .12s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .moment-item:hover { background: var(--bg3); }
+    .moment-item.expanded { background: var(--bg3); }
+
+    .m-icon {
+      flex-shrink: 0;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+    }
+    .m-icon.red    { background: rgba(255,69,58,.18);  color: var(--danger); }
+    .m-icon.yellow { background: rgba(245,166,35,.18); color: var(--yellow); }
+    .m-icon.green  { background: rgba(57,211,83,.15);  color: var(--green); }
+    .m-icon.blue   { background: rgba(76,154,255,.15); color: var(--blue); }
+    .m-icon.white  { background: rgba(255,255,255,.08); color: #bbb; }
+
+    .m-body { flex: 1; min-width: 0; }
+    .m-title  { font-size: 0.78rem; font-weight: 600; margin-bottom: 2px; }
+    .m-detail {
+      font-size: 0.7rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .m-time { font-size: 0.68rem; color: var(--muted); font-family: monospace; flex-shrink: 0; margin-top: 3px; }
+
+    .m-chevron {
+      flex-shrink: 0;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+      transition: transform .2s;
+      line-height: 1;
+    }
+    .moment-item.expanded .m-chevron { transform: rotate(90deg); color: var(--red); }
+
+    /* ── Moment radio drawer ──────────────────────────────────── */
+    .moment-radio-drawer {
+      background: #141414;
+      border-bottom: 1px solid var(--border);
+      display: none;
+    }
+    .moment-radio-drawer.open { display: block; }
+
+    .drawer-hdr {
+      padding: 7px 16px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+      background: #111;
+    }
+    .drawer-empty {
+      padding: 14px 16px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .drawer-radio-item {
+      padding: 9px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #141414;
+    }
+    .drawer-radio-item:last-child { border-bottom: none; }
+
+    /* ── Radio list ───────────────────────────────────────────── */
+    .radio-item {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background .12s;
+    }
+    .radio-item:hover { background: var(--bg3); }
+
+    .radio-hdr {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .drv-badge {
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border-left: 3px solid;
+      background: var(--bg3);
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .radio-ts { font-size: 0.68rem; color: var(--muted); font-family: monospace; }
+    .radio-team { font-size: 0.65rem; color: var(--muted); margin-left: auto; }
+
+    .radio-player {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .play-btn {
+      flex-shrink: 0;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+      transition: border-color .15s, color .15s, background .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .play-btn:hover { border-color: var(--red); color: var(--red); }
+    .play-btn.playing { background: var(--red); border-color: var(--red); color: #fff; }
+
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      touch-action: none;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--red);
+      border-radius: 3px;
+      pointer-events: none;
+      transition: width .1s linear;
+    }
+    .audio-dur { font-size: 0.65rem; color: var(--muted); font-family: monospace; min-width: 32px; flex-shrink: 0; }
+
+    /* ── Position chart ───────────────────────────────────────── */
+    .chart-wrap {
+      padding: 18px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .chart-wrap h2 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    #posChart {
+      display: block;
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+    .legend-bar { width: 16px; height: 3px; border-radius: 2px; }
+
+    /* ── Empty state ──────────────────────────────────────────── */
+    .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+    .empty .icon { font-size: 2rem; margin-bottom: 8px; }
+    .empty p { font-size: 0.78rem; }
+
+    /* ── Scrollbar ────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+    /* ── Mobile ───────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      header { padding: 10px 14px; gap: 10px; }
+      header h1 { font-size: 0.95rem; letter-spacing: 1px; }
+      header p  { display: none; }
+      .logo { width: 36px; height: 36px; font-size: 15px; }
+
+      .controls {
+        padding: 10px 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .ctrl-group { width: 100%; }
+      .ctrl-group:nth-child(2) { grid-column: 1 / -1; }
+      select { min-width: unset; width: 100%; font-size: 0.8rem; }
+      .btn { grid-column: 1 / -1; width: 100%; }
+
+      #statusBar { padding: 7px 14px; gap: 10px; font-size: 0.68rem; }
+      #errorMsg { margin: 10px 14px 0; }
+
+      .mobile-tabs { display: flex; }
+
+      .main-grid { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--border); }
+      .panel-body { max-height: 52vh; }
+      .panel.tab-hidden { display: none; }
+
+      .moment-item { padding: 10px 14px; }
+      .m-detail { white-space: normal; }
+      .radio-item { padding: 10px 14px; }
+      .drawer-radio-item { padding: 9px 14px; }
+      .play-btn { width: 38px; height: 38px; font-size: 12px; }
+
+      .chart-wrap { padding: 14px; }
+      #posChart { height: 220px !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">F1</div>
+  <div>
+    <h1>Highlights &amp; Radio</h1>
+    <p>Ključni trenuci i radio poruke vozača &nbsp;•&nbsp; OpenF1 API</p>
+  </div>
+</header>
+
+<!-- ── Controls ──────────────────────────────────────────────────────── -->
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Sezona</label>
+    <select id="yearSel">
+      <option value="2025">2025</option>
+      <option value="2024" selected>2024</option>
+      <option value="2023">2023</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Sesija</label>
+    <select id="sessionSel" disabled>
+      <option>— odaberi utrku —</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Grand Prix</label>
+    <select id="meetingSel" disabled>
+      <option>— odaberi sezonu —</option>
+    </select>
+  </div>
+  <button class="btn" id="loadBtn" disabled>Učitaj</button>
+</div>
+
+<div id="errorMsg"></div>
+<div id="statusBar">
+  <span id="stSession"></span>
+  <span id="stMoments"></span>
+  <span id="stRadio"></span>
+</div>
+
+<!-- ── Main content area ─────────────────────────────────────────────── -->
+<div id="content">
+  <div class="welcome">
+    <div class="icon">🏎️</div>
+    <h2>Formula 1 Highlights &amp; Radio</h2>
+    <p>
+      Odaberi sezonu, Grand Prix i sesiju, zatim pritisni <strong>Učitaj</strong>.<br>
+      Klikni na ključni trenutak da vidiš radio poruke vozača iz tog perioda.
+    </p>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const API = 'https://api.openf1.org/v1';
+
+/* ── DOM refs ──────────────────────────────────────────────────────── */
+const yearSel    = document.getElementById('yearSel');
+const meetingSel = document.getElementById('meetingSel');
+const sessionSel = document.getElementById('sessionSel');
+const loadBtn    = document.getElementById('loadBtn');
+const content    = document.getElementById('content');
+const statusBar  = document.getElementById('statusBar');
+const errorMsg   = document.getElementById('errorMsg');
+
+/* ── Global state ──────────────────────────────────────────────────── */
+let allRadio     = [];
+let allDriverMap = {};
+let activeAudio  = null;
+let activeBtn    = null;
+const audios     = {};
+
+/* ── API helper ────────────────────────────────────────────────────── */
+async function get(path) {
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error(`HTTP ${r.status} — ${path}`);
+  return r.json();
+}
+
+/* ── Error helpers ─────────────────────────────────────────────────── */
+function showErr(msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; }
+function hideErr()    { errorMsg.style.display = 'none'; }
+
+/* ── Time formatting ───────────────────────────────────────────────── */
+function fmtTs(ts) {
+  if (!ts) return '';
+  try { return new Date(ts).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+  catch { return String(ts); }
+}
+function fmtSec(s) {
+  if (isNaN(s) || s == null) return '0:00';
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+/* ── Moment classification ─────────────────────────────────────────── */
+function classify(msg) {
+  const flag = (msg.flag    || '').toLowerCase();
+  const cat  = (msg.category|| '').toLowerCase();
+  const txt  = (msg.message || '').toLowerCase();
+
+  if (flag === 'red'  || txt.includes('red flag'))  return { icon:'🚩', cls:'red',    label:'Crvena zastava' };
+  if (txt.includes('virtual safety car') || cat.includes('virtual safety car'))
+                                                     return { icon:'🟡', cls:'yellow', label:'Virtualni Safety Car' };
+  if (txt.includes('safety car') || cat.includes('safety car'))
+                                                     return { icon:'🚗', cls:'yellow', label:'Safety Car' };
+  if (flag === 'yellow' || cat.includes('yellow'))   return { icon:'⚠️', cls:'yellow', label:'Žuta zastava' };
+  if (flag === 'green'  || cat === 'clear')          return { icon:'🟢', cls:'green',  label:'Zelena zastava' };
+  if (txt.includes('fastest lap'))                   return { icon:'⚡', cls:'blue',   label:'Najbrži krug' };
+  if (txt.includes('drs enabled'))                   return { icon:'🔓', cls:'green',  label:'DRS uključen' };
+  if (txt.includes('drs disabled'))                  return { icon:'🔒', cls:'yellow', label:'DRS isključen' };
+  if (txt.includes('incident') || txt.includes('investigation') || txt.includes('collision'))
+                                                     return { icon:'⚖️', cls:'white',  label:'Incident' };
+  if (txt.includes('chequered') || txt.includes('checkered'))
+                                                     return { icon:'🏁', cls:'white',  label:'Chequered flag' };
+  return { icon:'📋', cls:'white', label:'Obavijest' };
+}
+
+function isInteresting(msg) {
+  const f   = (msg.flag    || '').toLowerCase();
+  const cat = (msg.category|| '').toLowerCase();
+  const txt = (msg.message || '').toLowerCase();
+  return ['red','yellow','green'].includes(f)
+    || cat.includes('safety car') || cat.includes('red flag') || cat.includes('incident')
+    || txt.includes('safety car') || txt.includes('red flag')
+    || txt.includes('fastest lap')
+    || txt.includes('incident') || txt.includes('investigation') || txt.includes('collision')
+    || txt.includes('drs enabled') || txt.includes('drs disabled')
+    || txt.includes('chequered')   || txt.includes('checkered');
+}
+
+/* ── Load meetings ─────────────────────────────────────────────────── */
+async function loadMeetings(year) {
+  meetingSel.disabled = true;
+  meetingSel.innerHTML = '<option>Učitavanje...</option>';
+  sessionSel.disabled = true;
+  sessionSel.innerHTML = '<option>— odaberi utrku —</option>';
+  loadBtn.disabled = true;
+  hideErr();
+
+  try {
+    const meetings = await get(`/meetings?year=${year}`);
+    meetings.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    meetingSel.innerHTML = '<option value="">— odaberi Grand Prix —</option>';
+    meetings.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.meeting_key;
+      o.textContent = `${m.meeting_name} — ${m.country_name}`;
+      meetingSel.appendChild(o);
+    });
+    meetingSel.disabled = false;
+  } catch (e) {
+    meetingSel.innerHTML = '<option>Greška</option>';
+    showErr('Nije moguće učitati utrke: ' + e.message);
+  }
+}
+
+/* ── Load sessions ─────────────────────────────────────────────────── */
+async function loadSessions(meetingKey) {
+  sessionSel.disabled = true;
+  sessionSel.innerHTML = '<option>Učitavanje...</option>';
+  loadBtn.disabled = true;
+  hideErr();
+
+  try {
+    const sessions = await get(`/sessions?meeting_key=${meetingKey}`);
+    sessions.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    sessionSel.innerHTML = '<option value="">— odaberi sesiju —</option>';
+    sessions.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.session_key;
+      o.textContent = s.session_name;
+      sessionSel.appendChild(o);
+    });
+    sessionSel.disabled = false;
+  } catch (e) {
+    sessionSel.innerHTML = '<option>Greška</option>';
+    showErr('Nije moguće učitati sesije: ' + e.message);
+  }
+}
+
+/* ── Load full session data ────────────────────────────────────────── */
+async function loadSession() {
+  const sk = sessionSel.value;
+  if (!sk) return;
+
+  hideErr();
+  loadBtn.disabled = true;
+  loadBtn.textContent = 'Učitavam…';
+
+  content.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Dohvaćam podatke iz OpenF1 API-ja…</p>
+    </div>`;
+
+  /* Reset audio state */
+  activeAudio = null;
+  activeBtn   = null;
+  for (const k in audios) delete audios[k];
+
+  try {
+    const [drivers, raceCtrl, radio] = await Promise.all([
+      get(`/drivers?session_key=${sk}`),
+      get(`/race_control?session_key=${sk}`),
+      get(`/team_radio?session_key=${sk}`)
+    ]);
+
+    let positions = [];
+    try { positions = await get(`/position?session_key=${sk}`); } catch {}
+
+    const driverMap = {};
+    drivers.forEach(d => { driverMap[d.driver_number] = d; });
+
+    /* Store globally for moment radio drawer */
+    allRadio     = radio;
+    allDriverMap = driverMap;
+
+    const moments = raceCtrl.filter(isInteresting);
+
+    statusBar.style.display = 'flex';
+    document.getElementById('stSession').innerHTML  =
+      `<span class="dot"></span> ${sessionSel.options[sessionSel.selectedIndex].text}`;
+    document.getElementById('stMoments').textContent = `${moments.length} ključnih trenutaka`;
+    document.getElementById('stRadio').textContent   = `${radio.length} radio poruka`;
+
+    render(moments, radio, driverMap, positions);
+
+  } catch (e) {
+    content.innerHTML = '';
+    showErr('Greška pri učitavanju: ' + e.message);
+  } finally {
+    loadBtn.disabled = false;
+    loadBtn.textContent = 'Učitaj';
+  }
+}
+
+/* ── Render ────────────────────────────────────────────────────────── */
+function render(moments, radio, driverMap, positions) {
+  content.innerHTML = `
+    <div class="mobile-tabs" id="mobileTabs">
+      <button class="tab-btn active" id="tabMoments" onclick="switchTab('moments')">
+        Trenuci <span class="badge">${moments.length}</span>
+      </button>
+      <button class="tab-btn" id="tabRadio" onclick="switchTab('radio')">
+        Radio <span class="badge">${radio.length}</span>
+      </button>
+    </div>
+    <div class="main-grid">
+      <div class="panel" id="panelMoments">
+        <div class="panel-hdr">
+          <h2>Ključni trenuci</h2>
+          <span class="badge">${moments.length}</span>
+        </div>
+        <div class="panel-body" id="momentsList"></div>
+      </div>
+      <div class="panel" id="panelRadio">
+        <div class="panel-hdr">
+          <h2>Team Radio</h2>
+          <span class="badge">${radio.length}</span>
+        </div>
+        <div class="panel-body" id="radioList"></div>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chartWrap" style="display:none">
+      <h2>Pozicije kroz sesiju</h2>
+      <canvas id="posChart" height="300"></canvas>
+      <div class="legend" id="legend"></div>
+    </div>`;
+
+  renderMoments(moments);
+  renderRadio(radio, driverMap);
+  if (positions.length > 0) renderChart(positions, driverMap);
+}
+
+/* ── Mobile tab switch ─────────────────────────────────────────────── */
+function switchTab(tab) {
+  const pm = document.getElementById('panelMoments');
+  const pr = document.getElementById('panelRadio');
+  const tm = document.getElementById('tabMoments');
+  const tr = document.getElementById('tabRadio');
+  if (!pm) return;
+  if (tab === 'moments') {
+    pm.classList.remove('tab-hidden');
+    pr.classList.add('tab-hidden');
+    tm.classList.add('active');
+    tr.classList.remove('active');
+  } else {
+    pr.classList.remove('tab-hidden');
+    pm.classList.add('tab-hidden');
+    tr.classList.add('active');
+    tm.classList.remove('active');
+  }
+}
+
+/* ── Moments ───────────────────────────────────────────────────────── */
+function renderMoments(moments) {
+  const list = document.getElementById('momentsList');
+  if (!moments.length) {
+    list.innerHTML = `<div class="empty"><div class="icon">🏁</div><p>Nema zabilježenih ključnih trenutaka</p></div>`;
+    return;
+  }
+  list.innerHTML = moments.map((m, mi) => {
+    const { icon, cls, label } = classify(m);
+    const lap    = m.lap_number ? `Krug ${m.lap_number}` : '';
+    const detail = [lap, m.message].filter(Boolean).join(' · ');
+    return `
+      <div class="moment-item" onclick="toggleMomentRadio(${mi}, '${escAttr(m.date || '')}', this)">
+        <div class="m-icon ${cls}">${icon}</div>
+        <div class="m-body">
+          <div class="m-title">${label}</div>
+          <div class="m-detail" title="${escHtml(m.message || '')}">${escHtml(detail)}</div>
+        </div>
+        <div class="m-time">${fmtTs(m.date)}</div>
+        <div class="m-chevron">›</div>
+      </div>
+      <div class="moment-radio-drawer" id="mrd-${mi}"></div>`;
+  }).join('');
+}
+
+/* ── Toggle moment radio drawer ────────────────────────────────────── */
+function toggleMomentRadio(mi, momentDate, itemEl) {
+  const drawer = document.getElementById(`mrd-${mi}`);
+  if (!drawer) return;
+
+  const isOpen = drawer.classList.contains('open');
+  if (isOpen) {
+    drawer.classList.remove('open');
+    itemEl.classList.remove('expanded');
+    return;
+  }
+
+  /* Find radio messages within -30s … +120s of the moment */
+  const mTime  = new Date(momentDate).getTime();
+  const nearby = allRadio
+    .filter(r => {
+      const t = new Date(r.date).getTime();
+      return t >= mTime - 30_000 && t <= mTime + 120_000;
+    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (!nearby.length) {
+    drawer.innerHTML = `
+      <div class="drawer-hdr">Radio u periodu ovog trenutka</div>
+      <div class="drawer-empty">Nema radio poruka u ovom periodu (±2 min)</div>`;
+  } else {
+    const items = nearby.map((r, ri) => {
+      const d     = allDriverMap[r.driver_number] || {};
+      const abbr  = d.name_acronym || `#${r.driver_number}`;
+      const color = d.team_colour  ? `#${d.team_colour}` : '#666';
+      const id    = `m${mi}r${ri}`;
+      return `
+        <div class="drawer-radio-item">
+          <span class="drv-badge" style="border-left-color:${color}">${escHtml(abbr)}</span>
+          <span class="radio-ts">${fmtTs(r.date)}</span>
+          <div class="radio-player" style="flex:1">
+            <button class="play-btn" id="pb-${id}"
+              onclick="togglePlay('${id}', '${escAttr(r.recording_url)}')"
+              title="Reproduciraj">▶</button>
+            <div class="progress-bar" onclick="seekTo(event, this, '${id}')">
+              <div class="progress-fill" id="pf-${id}" style="width:0%"></div>
+            </div>
+            <span class="audio-dur" id="dur-${id}">0:00</span>
+          </div>
+        </div>`;
+    }).join('');
+    drawer.innerHTML = `
+      <div class="drawer-hdr">Radio u periodu ovog trenutka (${nearby.length})</div>
+      ${items}`;
+  }
+
+  drawer.classList.add('open');
+  itemEl.classList.add('expanded');
+}
+
+/* ── Radio ─────────────────────────────────────────────────────────── */
+function renderRadio(radio, driverMap) {
+  const list = document.getElementById('radioList');
+  if (!radio.length) {
+    list.innerHTML = `<div class="empty"><div class="icon">📻</div><p>Nema dostupnih radio poruka za ovu sesiju</p></div>`;
+    return;
+  }
+  list.innerHTML = radio.map((r, i) => {
+    const d      = driverMap[r.driver_number] || {};
+    const abbr   = d.name_acronym || `#${r.driver_number}`;
+    const team   = d.team_name    || '';
+    const color  = d.team_colour  ? `#${d.team_colour}` : '#666';
+    return `
+      <div class="radio-item">
+        <div class="radio-hdr">
+          <span class="drv-badge" style="border-left-color:${color}">${escHtml(abbr)}</span>
+          <span class="radio-ts">${fmtTs(r.date)}</span>
+          <span class="radio-team">${escHtml(team)}</span>
+        </div>
+        <div class="radio-player">
+          <button class="play-btn" id="pb-${i}"
+            onclick="togglePlay(${i}, '${escAttr(r.recording_url)}')"
+            title="Reproduciraj radio poruku">▶</button>
+          <div class="progress-bar" onclick="seekTo(event, this, ${i})">
+            <div class="progress-fill" id="pf-${i}" style="width:0%"></div>
+          </div>
+          <span class="audio-dur" id="dur-${i}">0:00</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Audio player ──────────────────────────────────────────────────── */
+function togglePlay(idx, url) {
+  const btn = document.getElementById(`pb-${idx}`);
+  if (!btn) return;
+
+  /* Stop previous if different */
+  if (activeBtn && activeBtn !== btn) {
+    activeAudio.pause();
+    activeBtn.textContent = '▶';
+    activeBtn.classList.remove('playing');
+  }
+
+  if (!audios[idx]) {
+    const a = new Audio(url);
+    a.addEventListener('timeupdate', () => {
+      const pct = a.duration ? (a.currentTime / a.duration) * 100 : 0;
+      const pf  = document.getElementById(`pf-${idx}`);
+      const dur = document.getElementById(`dur-${idx}`);
+      if (pf)  pf.style.width = pct + '%';
+      if (dur) dur.textContent = fmtSec(a.currentTime);
+    });
+    a.addEventListener('ended', () => {
+      btn.textContent = '▶';
+      btn.classList.remove('playing');
+      const pf = document.getElementById(`pf-${idx}`);
+      if (pf) pf.style.width = '0%';
+      const dur = document.getElementById(`dur-${idx}`);
+      if (dur) dur.textContent = '0:00';
+    });
+    audios[idx] = a;
+  }
+
+  const a = audios[idx];
+  if (a.paused) {
+    a.play();
+    btn.textContent = '⏸';
+    btn.classList.add('playing');
+    activeAudio = a;
+    activeBtn   = btn;
+  } else {
+    a.pause();
+    btn.textContent = '▶';
+    btn.classList.remove('playing');
+  }
+}
+
+function seekTo(e, bar, idx) {
+  if (!audios[idx] || !audios[idx].duration) return;
+  const rect  = bar.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  audios[idx].currentTime = ratio * audios[idx].duration;
+}
+
+/* ── Position chart (Canvas) ───────────────────────────────────────── */
+function renderChart(positions, driverMap) {
+  const wrap = document.getElementById('chartWrap');
+
+  const byDriver = {};
+  positions.forEach(p => {
+    if (!p.driver_number || p.position == null) return;
+    if (!byDriver[p.driver_number]) byDriver[p.driver_number] = [];
+    byDriver[p.driver_number].push({ t: new Date(p.date).getTime(), pos: p.position });
+  });
+
+  const drivers = Object.keys(byDriver).filter(d => byDriver[d].length > 1);
+  if (!drivers.length) return;
+
+  const SAMPLES = 200;
+  const tMin = Math.min(...drivers.map(d => byDriver[d][0].t));
+  const tMax = Math.max(...drivers.map(d => byDriver[d][byDriver[d].length - 1].t));
+  const tRange = tMax - tMin || 1;
+
+  function interpolate(arr, t) {
+    let lo = 0, hi = arr.length - 1;
+    while (lo < hi - 1) {
+      const mid = (lo + hi) >> 1;
+      if (arr[mid].t <= t) lo = mid; else hi = mid;
+    }
+    if (arr[lo].t === arr[hi].t) return arr[lo].pos;
+    const ratio = (t - arr[lo].t) / (arr[hi].t - arr[lo].t);
+    return arr[lo].pos + ratio * (arr[hi].pos - arr[lo].pos);
+  }
+
+  const maxPos = Math.max(...drivers.flatMap(d => byDriver[d].map(p => p.pos)));
+  const numPos = Math.min(maxPos, 22);
+
+  wrap.style.display = 'block';
+  const canvas = document.getElementById('posChart');
+  const W = canvas.parentElement.clientWidth - 40;
+  canvas.width  = Math.max(W, 300);
+  canvas.height = canvas.getAttribute('height') || 300;
+
+  const ctx = canvas.getContext('2d');
+  const pad = { top: 18, right: 50, bottom: 34, left: 36 };
+  const cW  = canvas.width  - pad.left - pad.right;
+  const cH  = canvas.height - pad.top  - pad.bottom;
+
+  ctx.fillStyle = '#181818';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = '#2a2a2a';
+  ctx.lineWidth = 1;
+  for (let p = 1; p <= numPos; p++) {
+    const y = pad.top + ((p - 1) / (numPos - 1)) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    if (p === 1 || p % 5 === 0) {
+      ctx.fillStyle = '#555'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+      ctx.fillText(p, pad.left - 5, y + 4);
+    }
+  }
+  for (let i = 0; i <= 10; i++) {
+    const x = pad.left + (i / 10) * cW;
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + cH); ctx.stroke();
+  }
+
+  ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Tijek sesije →', pad.left + cW / 2, canvas.height - 4);
+  ctx.save(); ctx.translate(11, pad.top + cH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Pozicija', 0, 0); ctx.restore();
+
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+
+  drivers.sort((a, b) => {
+    const pa = byDriver[a][byDriver[a].length - 1].pos;
+    const pb = byDriver[b][byDriver[b].length - 1].pos;
+    return pa - pb;
+  });
+
+  drivers.forEach(dNum => {
+    const driver = driverMap[dNum] || {};
+    const color  = driver.team_colour ? `#${driver.team_colour}` : '#888';
+    const abbr   = driver.name_acronym || `#${dNum}`;
+
+    const pts = Array.from({ length: SAMPLES }, (_, i) => {
+      const t   = tMin + (i / (SAMPLES - 1)) * tRange;
+      const pos = interpolate(byDriver[dNum], t);
+      return { x: pad.left + (i / (SAMPLES - 1)) * cW,
+               y: pad.top  + ((pos - 1) / (numPos - 1)) * cH };
+    });
+
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 1.5;
+    ctx.globalAlpha = 0.85;
+    pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    const last = pts[pts.length - 1];
+    ctx.fillStyle = color;
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(abbr, last.x + 3, last.y + 3);
+
+    const li = document.createElement('div');
+    li.className = 'legend-item';
+    li.innerHTML = `<div class="legend-bar" style="background:${color}"></div><span>${abbr}</span>`;
+    legend.appendChild(li);
+  });
+}
+
+/* ── Utils ─────────────────────────────────────────────────────────── */
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s || '').replace(/'/g, '%27');
+}
+
+/* ── Event listeners ───────────────────────────────────────────────── */
+yearSel.addEventListener('change', () => loadMeetings(yearSel.value));
+
+meetingSel.addEventListener('change', () => {
+  if (meetingSel.value) loadSessions(meetingSel.value);
+});
+
+sessionSel.addEventListener('change', () => {
+  loadBtn.disabled = !sessionSel.value;
+});
+
+loadBtn.addEventListener('click', loadSession);
+
+/* ── Init ──────────────────────────────────────────────────────────── */
+loadMeetings(yearSel.value);
+</script>
+</body>
+</html>
