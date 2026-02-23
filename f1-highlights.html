@@ -709,12 +709,35 @@
       position: absolute;
       display: flex; flex-direction: column; align-items: center;
       transform: translateX(-50%);
+      cursor: pointer;
+      transition: opacity .15s;
     }
+    .tl-evt:hover { opacity: 0.75; }
+    .tl-evt:hover .tl-evt-icon { transform: scale(1.3); }
     .tl-evt.above { bottom: 50%; padding-bottom: 3px; }
     .tl-evt.below { top: 50%; padding-top: 3px; flex-direction: column-reverse; }
-    .tl-evt-icon { font-size: 12px; line-height: 1.2; }
+    .tl-evt-icon { font-size: 12px; line-height: 1.2; transition: transform .15s; }
     .tl-evt-stem { width: 1px; height: 7px; background: #444; }
     .tl-evt-lap  { font-size: 0.52rem; color: var(--muted); font-family: monospace; white-space: nowrap; line-height: 1.3; }
+
+    /* Narrative */
+    .rs-narrative { }
+    .rs-narrative-body {
+      font-size: 0.78rem;
+      line-height: 1.75;
+      color: #ccc;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .rs-narr-line { display: flex; align-items: baseline; gap: 7px; }
+    .rs-narr-icon { flex-shrink: 0; font-size: 11px; width: 16px; text-align: center; }
+    .rs-narr-text strong { color: var(--text); font-weight: 600; }
+    .rs-narr-krug {
+      font-size: 0.6rem; font-family: monospace; font-weight: 700;
+      color: var(--muted); background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 3px; padding: 1px 5px; flex-shrink: 0;
+    }
     /* Stat chips */
     .rs-stat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
     .rs-stat-chip {
@@ -1671,6 +1694,185 @@ function toggleChartHighlight(dNum) {
   else closeModal();
 }
 
+/* ── Race narrative builder ────────────────────────────────────────── */
+function buildRaceNarrative(moments, driverMap, positions, pits) {
+  if (!positions.length && !moments.length) return [];
+
+  /* Build per-driver time-sorted position arrays */
+  const byDrv = {};
+  positions.forEach(p => {
+    if (!p.driver_number || p.position == null) return;
+    const dn = String(p.driver_number);
+    if (!byDrv[dn]) byDrv[dn] = [];
+    byDrv[dn].push({ t: new Date(p.date).getTime(), pos: p.position });
+  });
+  Object.values(byDrv).forEach(a => a.sort((x, y) => x.t - y.t));
+
+  let tMin = Infinity, tMax = -Infinity;
+  positions.forEach(p => { const t = new Date(p.date).getTime(); if (t < tMin) tMin = t; if (t > tMax) tMax = t; });
+  moments.forEach(m  => { const t = new Date(m.date).getTime(); if (t < tMin) tMin = t; if (t > tMax) tMax = t; });
+
+  /* Get leader abbreviation at a given timestamp */
+  function leaderAt(t) {
+    let best = null, bestPos = Infinity;
+    Object.entries(byDrv).forEach(([dn, arr]) => {
+      if (!arr.length) return;
+      let pos = arr[0].pos;
+      for (const p of arr) { if (p.t <= t) pos = p.pos; else break; }
+      if (pos < bestPos) { bestPos = pos; best = dn; }
+    });
+    if (!best) return null;
+    const d = driverMap[best] || {};
+    return { abbr: d.name_acronym || `#${best}`, color: d.team_colour ? `#${d.team_colour}` : '#888' };
+  }
+
+  /* Helper: coloured driver span */
+  function drvSpan(abbr, color) {
+    return `<strong style="color:${color}">${escHtml(abbr)}</strong>`;
+  }
+
+  /* Helper: find pits within a time window (seconds before/after) */
+  function pitsNear(t, beforeSec, afterSec) {
+    return pits.filter(p => {
+      const pt = new Date(p.date).getTime();
+      return pt >= t - beforeSec * 1000 && pt <= t + afterSec * 1000;
+    });
+  }
+
+  const lines = [];
+
+  /* ── Opening ──────────────────────────────────────────────── */
+  if (positions.length) {
+    const startLeader = leaderAt(tMin + 60000);
+    if (startLeader) {
+      /* Top 3 at start */
+      const top3 = Object.entries(byDrv)
+        .map(([dn, arr]) => {
+          let pos = arr[0].pos;
+          for (const p of arr) { if (p.t <= tMin + 60000) pos = p.pos; else break; }
+          return { dn, pos };
+        })
+        .sort((a, b) => a.pos - b.pos)
+        .slice(0, 3)
+        .map(({ dn }) => {
+          const d = driverMap[dn] || {};
+          return { abbr: d.name_acronym || `#${dn}`, color: d.team_colour ? `#${d.team_colour}` : '#888' };
+        });
+      const names = top3.map(x => drvSpan(x.abbr, x.color)).join(', ');
+      lines.push({ icon: '🏁', html: `Vodstvo od starta: ${names}.` });
+    }
+  }
+
+  /* ── Key events chronologically ─────────────────────────── */
+  /* Group consecutive SC/VSC together */
+  const handled = new Set();
+
+  moments.forEach((m, idx) => {
+    if (handled.has(idx)) return;
+    const { label } = classify(m);
+    const lap = m.lap_number;
+    const lapBadge = lap ? `<span class="rs-narr-krug">K${lap}</span>` : '';
+    const t = new Date(m.date).getTime();
+
+    if (label === 'Crvena zastava') {
+      const msg = m.message ? `: ${escHtml(m.message)}` : '';
+      lines.push({ icon: '🚩', html: `${lapBadge} <strong>Crvena zastava</strong>${msg}.` });
+      /* Who leads after restart (5+ min later) */
+      const after = leaderAt(t + 5 * 60 * 1000);
+      if (after) lines.push({ icon: '🟢', html: `Restart — vodio ${drvSpan(after.abbr, after.color)}.` });
+      handled.add(idx);
+
+    } else if (label === 'Safety Car' || label === 'Virtualni Safety Car') {
+      const isVSC = label === 'Virtualni Safety Car';
+      const tag = isVSC ? 'VSC' : 'Safety Car';
+      /* Find all consecutive SC events */
+      const scPits = pitsNear(t, 30, 360);
+      let html = `${lapBadge} <strong>${tag}</strong> raspoređen.`;
+      if (scPits.length > 0) html += ` ${scPits.length} vozača koristilo pit prozor.`;
+      /* Who leads when SC ends (look for green flag nearby) */
+      const greenAfter = moments.find(mm => {
+        const tt = new Date(mm.date).getTime();
+        return tt > t && tt < t + 10 * 60 * 1000 && classify(mm).label === 'Zelena zastava';
+      });
+      if (greenAfter) {
+        const resumeLeader = leaderAt(new Date(greenAfter.date).getTime() + 30000);
+        if (resumeLeader) html += ` Po restartu: ${drvSpan(resumeLeader.abbr, resumeLeader.color)}.`;
+        handled.add(moments.indexOf(greenAfter));
+      }
+      lines.push({ icon: isVSC ? '🟡' : '🚗', html });
+      handled.add(idx);
+
+    } else if (label === 'Najbrži krug') {
+      /* Extract driver from message if possible */
+      const msg = m.message || '';
+      lines.push({ icon: '⚡', html: `${lapBadge} <strong>Najbrži krug</strong>${msg ? ` — ${escHtml(msg)}` : ''}.` });
+      handled.add(idx);
+
+    } else if (label === 'Incident' && !handled.has(idx)) {
+      const msg = m.message ? escHtml(m.message) : '';
+      lines.push({ icon: '⚖️', html: `${lapBadge} Incident${msg ? `: ${msg}` : ''}.` });
+      handled.add(idx);
+    }
+  });
+
+  /* ── Pit stop summary (source: /pit) ─────────────────────── */
+  if (pits.length > 0) {
+    const byDrvPit = {};
+    pits.forEach(p => { const dn = String(p.driver_number); byDrvPit[dn] = (byDrvPit[dn] || 0) + 1; });
+    const maxStops = Math.max(...Object.values(byDrvPit));
+    const topStoppers = Object.entries(byDrvPit).filter(([, v]) => v === maxStops);
+
+    const fPit = pits.filter(p => p.pit_duration > 0)
+      .reduce((b, p) => (!b || p.pit_duration < b.pit_duration) ? p : b, null);
+    const fPitD = fPit ? (driverMap[fPit.driver_number] || {}) : null;
+    const fPitAbbr  = fPitD ? (fPitD.name_acronym || `#${fPit.driver_number}`) : null;
+    const fPitColor = fPitD?.team_colour ? `#${fPitD.team_colour}` : '#888';
+
+    let html = `Ukupno <strong>${pits.length} pit stopova</strong>.`;
+    if (fPit && fPitAbbr) html += ` Najbrži servis: ${drvSpan(fPitAbbr, fPitColor)} (${fPit.pit_duration.toFixed(1)}s).`;
+    if (maxStops >= 3 && topStoppers.length) {
+      const names = topStoppers.map(([dn]) => {
+        const d = driverMap[dn] || {};
+        return drvSpan(d.name_acronym || `#${dn}`, d.team_colour ? `#${d.team_colour}` : '#888');
+      }).join(', ');
+      html += ` ${names} — ${maxStops}× u boksovima.`;
+    }
+    lines.push({ icon: '🔧', html });
+  }
+
+  /* ── Radio highlight — most active driver ────────────────── */
+  if (allRadio.length > 0) {
+    const rcounts = {};
+    allRadio.forEach(r => { const dn = String(r.driver_number); rcounts[dn] = (rcounts[dn] || 0) + 1; });
+    const topDn = Object.entries(rcounts).sort((a, b) => b[1] - a[1])[0];
+    if (topDn) {
+      const [dn, cnt] = topDn;
+      const d = driverMap[dn] || {};
+      const abbr  = d.name_acronym || `#${dn}`;
+      const color = d.team_colour ? `#${d.team_colour}` : '#888';
+      lines.push({ icon: '📻', html: `Najviše radio komunikacije: ${drvSpan(abbr, color)} (${cnt} poruka).` });
+    }
+  }
+
+  /* ── Final result ─────────────────────────────────────────── */
+  const finalP = {};
+  positions.forEach(p => {
+    if (!p.driver_number || p.position == null) return;
+    const dn = String(p.driver_number), t = new Date(p.date).getTime();
+    if (!finalP[dn] || t > finalP[dn].t) finalP[dn] = { pos: p.position };
+  });
+  const top3end = Object.entries(finalP).sort((a, b) => a[1].pos - b[1].pos).slice(0, 3);
+  if (top3end.length >= 2) {
+    const spans = top3end.map(([dn]) => {
+      const d = driverMap[dn] || {};
+      return drvSpan(d.name_acronym || `#${dn}`, d.team_colour ? `#${d.team_colour}` : '#888');
+    });
+    lines.push({ icon: '🏆', html: `Poredak na kraju: ${spans.join(' › ')}.` });
+  }
+
+  return lines;
+}
+
 /* ── Race summary ──────────────────────────────────────────────────── */
 function renderRaceSummary(moments, driverMap, positions, pits) {
   const sec = document.getElementById('raceSummarySection');
@@ -1730,7 +1932,8 @@ function renderRaceSummary(moments, driverMap, positions, pits) {
     const lap = m.lap_number ? `K${m.lap_number}` : '';
     const cls = i % 2 === 0 ? 'above' : 'below';
     return `<div class="tl-evt ${cls}" style="left:${pct.toFixed(1)}%"
-              title="${escAttr(label)}${lap ? ' — ' + lap : ''}">
+              title="${escAttr(label)}${lap ? ' — ' + lap : ''}"
+              onclick="showMomentTypeDetail('${escAttr(label)}')">
       <span class="tl-evt-icon">${icon}</span>
       <span class="tl-evt-stem"></span>
       <span class="tl-evt-lap">${lap}</span>
@@ -1802,6 +2005,19 @@ function renderRaceSummary(moments, driverMap, positions, pits) {
       ${leadersHtml}
     </div>` : '';
 
+  /* ─ Narrative ─ */
+  const narrLines = buildRaceNarrative(moments, driverMap, positions, pits);
+  const narrativeHtml = narrLines.length ? `
+    <div class="rs-narrative">
+      <div class="rs-section-lbl">Tijek sesije</div>
+      <div class="rs-narrative-body">
+        ${narrLines.map(l => `<div class="rs-narr-line">
+          <span class="rs-narr-icon">${l.icon}</span>
+          <span class="rs-narr-text">${l.html}</span>
+        </div>`).join('')}
+      </div>
+    </div>` : '';
+
   sec.innerHTML = `
     <div class="race-summary">
       <div class="rs-toggle" onclick="toggleSummary()">
@@ -1813,6 +2029,7 @@ function renderRaceSummary(moments, driverMap, positions, pits) {
         <div class="rs-right">
           ${timelineHtml}
           ${statsHtml}
+          ${narrativeHtml}
         </div>
       </div>
     </div>`;
