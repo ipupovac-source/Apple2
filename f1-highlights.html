@@ -645,6 +645,101 @@
       .reports-grid { grid-template-columns: 1fr; }
     }
 
+    /* ── Race summary ─────────────────────────────────────────── */
+    .race-summary { border-bottom: 2px solid var(--border); }
+    .rs-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      cursor: pointer;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+    }
+    .rs-toggle:hover { background: var(--bg3); }
+    .rs-toggle h2 {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 2px; color: var(--muted);
+    }
+    .rs-chevron { font-size: 11px; color: var(--muted); transition: transform .2s; }
+    .rs-body {
+      padding: 16px 20px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    /* Podium */
+    .rs-podium { display: flex; gap: 8px; flex-shrink: 0; }
+    .rs-podium-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      text-align: center;
+      min-width: 82px;
+      cursor: pointer;
+      transition: background .12s, border-color .12s;
+    }
+    .rs-podium-card:hover { background: #2a2a2a; border-color: #444; }
+    .rs-podium-medal { font-size: 1.2rem; margin-bottom: 5px; }
+    .rs-podium-abbr  { font-size: 0.9rem; font-weight: 800; font-family: monospace; }
+    .rs-podium-name  { font-size: 0.62rem; color: var(--text); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 82px; }
+    .rs-podium-team  { font-size: 0.58rem; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 82px; }
+    /* Right column */
+    .rs-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+    .rs-section-lbl {
+      font-size: 0.6rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 7px;
+    }
+    /* Timeline */
+    .tl-wrap { display: flex; align-items: center; gap: 8px; }
+    .tl-label-l, .tl-label-r {
+      font-size: 0.58rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 1px; flex-shrink: 0;
+    }
+    .tl-inner { flex: 1; position: relative; height: 64px; }
+    .tl-bar {
+      position: absolute; top: 50%; left: 0; right: 0;
+      height: 2px; background: linear-gradient(to right, var(--red), #555);
+      border-radius: 1px; transform: translateY(-50%);
+    }
+    .tl-events-layer { position: absolute; inset: 0; }
+    .tl-evt {
+      position: absolute;
+      display: flex; flex-direction: column; align-items: center;
+      transform: translateX(-50%);
+    }
+    .tl-evt.above { bottom: 50%; padding-bottom: 3px; }
+    .tl-evt.below { top: 50%; padding-top: 3px; flex-direction: column-reverse; }
+    .tl-evt-icon { font-size: 12px; line-height: 1.2; }
+    .tl-evt-stem { width: 1px; height: 7px; background: #444; }
+    .tl-evt-lap  { font-size: 0.52rem; color: var(--muted); font-family: monospace; white-space: nowrap; line-height: 1.3; }
+    /* Stat chips */
+    .rs-stat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .rs-stat-chip {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 11px; font-size: 0.72rem;
+    }
+    .rs-stat-icon { font-size: 12px; }
+    .rs-stat-val  { font-weight: 700; font-family: monospace; }
+    .rs-stat-lbl  { color: var(--muted); font-size: 0.63rem; }
+    /* Leaders */
+    .rs-leaders { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .rs-leaders-lbl { font-size: 0.65rem; color: var(--muted); }
+    .rs-leader-chip {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 3px; padding: 2px 7px;
+      font-size: 0.68rem; font-family: monospace; font-weight: 700;
+    }
+    /* Mobile */
+    @media (max-width: 640px) {
+      .rs-body { flex-direction: column; padding: 12px 14px; }
+      .rs-podium { justify-content: center; }
+      .rs-toggle { padding: 10px 14px; }
+    }
+
     /* ── Detail modal ─────────────────────────────────────────── */
     .modal-backdrop {
       position: fixed;
@@ -843,6 +938,7 @@ const errorMsg   = document.getElementById('errorMsg');
 let allRadio     = [];
 let allDriverMap = {};
 let allMoments   = [];
+let allPits      = [];
 let activeAudio  = null;
 let activeBtn    = null;
 const audios     = {};
@@ -995,7 +1091,7 @@ async function loadSession() {
   for (const k in audios) delete audios[k];
 
   try {
-    const steps = ['Vozači…', 'Race control…', 'Team radio…', 'Pozicije…'];
+    const steps = ['Vozači…', 'Race control…', 'Team radio…', 'Pit stopovi…', 'Pozicije…'];
     function setStep(i) {
       content.innerHTML = `
         <div class="loading">
@@ -1017,15 +1113,21 @@ async function loadSession() {
     await delay(300);
 
     setStep(3);
+    let pits = [];
+    try { pits = await get(`/pit?session_key=${sk}`); } catch {}
+    await delay(300);
+
+    setStep(4);
     let positions = [];
     try { positions = await get(`/position?session_key=${sk}`); } catch {}
 
     const driverMap = {};
     drivers.forEach(d => { driverMap[d.driver_number] = d; });
 
-    /* Store globally for moment radio drawer */
+    /* Store globally */
     allRadio     = radio;
     allDriverMap = driverMap;
+    allPits      = pits;
 
     const moments = raceCtrl.filter(isInteresting);
     allMoments    = moments;
@@ -1036,7 +1138,7 @@ async function loadSession() {
     document.getElementById('stMoments').textContent = `${moments.length} ključnih trenutaka`;
     document.getElementById('stRadio').textContent   = `${radio.length} radio poruka`;
 
-    render(moments, radio, driverMap, positions);
+    render(moments, radio, driverMap, positions, pits);
 
   } catch (e) {
     content.innerHTML = '';
@@ -1048,8 +1150,9 @@ async function loadSession() {
 }
 
 /* ── Render ────────────────────────────────────────────────────────── */
-function render(moments, radio, driverMap, positions) {
+function render(moments, radio, driverMap, positions, pits) {
   content.innerHTML = `
+    <div id="raceSummarySection"></div>
     <div class="mobile-tabs" id="mobileTabs">
       <button class="tab-btn active" id="tabMoments" onclick="switchTab('moments')">
         Trenuci <span class="badge">${moments.length}</span>
@@ -1085,6 +1188,7 @@ function render(moments, radio, driverMap, positions) {
     </div>
     <div id="reportsSection"></div>`;
 
+  renderRaceSummary(moments, driverMap, positions, pits);
   renderMoments(moments);
   renderRadio(radio, driverMap);
   if (positions.length > 0) renderChart(positions, driverMap);
@@ -1565,6 +1669,162 @@ function toggleChartHighlight(dNum) {
 
   if (!wasHL) showDriverDetail(String(dNum));
   else closeModal();
+}
+
+/* ── Race summary ──────────────────────────────────────────────────── */
+function renderRaceSummary(moments, driverMap, positions, pits) {
+  const sec = document.getElementById('raceSummarySection');
+  if (!sec || (!positions.length && !moments.length)) return;
+
+  /* ─ Final standings → podium ─ */
+  const finalPos = {};
+  positions.forEach(p => {
+    if (!p.driver_number || p.position == null) return;
+    const dn = String(p.driver_number), t = new Date(p.date).getTime();
+    if (!finalPos[dn] || t > finalPos[dn].t) finalPos[dn] = { t, pos: p.position };
+  });
+  const podium = Object.entries(finalPos)
+    .sort((a, b) => a[1].pos - b[1].pos)
+    .slice(0, 3)
+    .map(([dn, v]) => {
+      const d = driverMap[dn] || {};
+      return {
+        dn,
+        abbr:  d.name_acronym || `#${dn}`,
+        name:  d.full_name    || d.name_acronym || `#${dn}`,
+        team:  d.team_name    || '',
+        color: d.team_colour  ? `#${d.team_colour}` : '#888',
+        pos:   Math.round(v.pos)
+      };
+    });
+
+  /* ─ Drivers who led ─ */
+  const leadersSet = new Set();
+  positions.forEach(p => {
+    if (p.position === 1 && p.driver_number) leadersSet.add(String(p.driver_number));
+  });
+  const leaders = [...leadersSet].map(dn => {
+    const d = driverMap[dn] || {};
+    return { abbr: d.name_acronym || `#${dn}`, color: d.team_colour ? `#${d.team_colour}` : '#888' };
+  });
+
+  /* ─ Timeline: pick representative events, avoid clutter ─ */
+  let tMin = Infinity, tMax = -Infinity;
+  positions.forEach(p => { const t = new Date(p.date).getTime(); if (t < tMin) tMin = t; if (t > tMax) tMax = t; });
+  moments.forEach(m => { const t = new Date(m.date).getTime(); if (t < tMin) tMin = t; if (t > tMax) tMax = t; });
+  const tRange = tMax - tMin || 1;
+
+  const majorSet = new Set(['Crvena zastava', 'Safety Car', 'Virtualni Safety Car', 'Chequered flag', 'Najbrži krug', 'Zelena zastava']);
+  let yCnt = 0, iCnt = 0;
+  const tlEvents = moments.filter(m => {
+    const lbl = classify(m).label;
+    if (majorSet.has(lbl)) return true;
+    if (lbl === 'Žuta zastava') return ++yCnt <= 4;
+    if (lbl === 'Incident')    return ++iCnt <= 3;
+    return false;
+  });
+
+  const tlHtml = tlEvents.map((m, i) => {
+    const { icon, label } = classify(m);
+    const pct = Math.max(1, Math.min(99, ((new Date(m.date).getTime() - tMin) / tRange) * 100));
+    const lap = m.lap_number ? `K${m.lap_number}` : '';
+    const cls = i % 2 === 0 ? 'above' : 'below';
+    return `<div class="tl-evt ${cls}" style="left:${pct.toFixed(1)}%"
+              title="${escAttr(label)}${lap ? ' — ' + lap : ''}">
+      <span class="tl-evt-icon">${icon}</span>
+      <span class="tl-evt-stem"></span>
+      <span class="tl-evt-lap">${lap}</span>
+    </div>`;
+  }).join('');
+
+  /* ─ Stats ─ */
+  let maxLap = 0;
+  moments.forEach(m => { if (m.lap_number > maxLap) maxLap = m.lap_number; });
+  const scCnt  = moments.filter(m => ['Safety Car','Virtualni Safety Car'].includes(classify(m).label)).length;
+  const redCnt = moments.filter(m => classify(m).label === 'Crvena zastava').length;
+  const incCnt = moments.filter(m => classify(m).label === 'Incident').length;
+  const fPit   = pits.length ? pits.reduce((b, p) => (!b || (p.pit_duration > 0 && p.pit_duration < b.pit_duration)) ? p : b, null) : null;
+  const fPitDrv = fPit ? (driverMap[fPit.driver_number] || {}).name_acronym || `#${fPit.driver_number}` : null;
+
+  const chips = [];
+  if (maxLap   > 0) chips.push({ icon: '🔄', val: maxLap,      lbl: 'krugova' });
+  if (pits.length) chips.push({ icon: '🔧', val: pits.length, lbl: 'pit stopova' });
+  if (scCnt    > 0) chips.push({ icon: '🚗', val: scCnt,       lbl: 'SC/VSC' });
+  if (redCnt   > 0) chips.push({ icon: '🚩', val: redCnt,      lbl: 'crvena zastava' });
+  if (incCnt   > 0) chips.push({ icon: '⚖️', val: incCnt,      lbl: 'incidenata' });
+  if (fPit && fPit.pit_duration > 0)
+    chips.push({ icon: '⚡', val: `${fPit.pit_duration.toFixed(1)}s`, lbl: `najbrži pit (${escHtml(fPitDrv)})` });
+
+  /* ─ Build HTML ─ */
+  const medals = ['🥇', '🥈', '🥉'];
+  const podiumHtml = podium.length ? `
+    <div class="rs-podium">
+      ${podium.map((p, i) => `
+        <div class="rs-podium-card clickable" onclick="showDriverDetail('${escAttr(p.dn)}')"
+             style="border-top:3px solid ${p.color}" title="${escAttr(p.name)}">
+          <div class="rs-podium-medal">${medals[i]}</div>
+          <div class="rs-podium-abbr" style="color:${p.color}">${escHtml(p.abbr)}</div>
+          <div class="rs-podium-name">${escHtml(p.name)}</div>
+          <div class="rs-podium-team">${escHtml(p.team)}</div>
+        </div>`).join('')}
+    </div>` : '';
+
+  const timelineHtml = tlEvents.length ? `
+    <div class="rs-timeline">
+      <div class="rs-section-lbl">Kronologija sesije</div>
+      <div class="tl-wrap">
+        <span class="tl-label-l">Start</span>
+        <div class="tl-inner">
+          <div class="tl-bar"></div>
+          <div class="tl-events-layer">${tlHtml}</div>
+        </div>
+        <span class="tl-label-r">🏁</span>
+      </div>
+    </div>` : '';
+
+  const leadersHtml = leaders.length > 1 ? `
+    <div class="rs-leaders">
+      <span class="rs-leaders-lbl">Vodili:</span>
+      ${leaders.map(l => `<span class="rs-leader-chip" style="border-left:2px solid ${l.color}">${escHtml(l.abbr)}</span>`).join('')}
+    </div>` : '';
+
+  const statsHtml = chips.length || leadersHtml ? `
+    <div>
+      ${chips.length ? `
+        <div class="rs-section-lbl">Statistike</div>
+        <div class="rs-stat-chips">
+          ${chips.map(c => `<div class="rs-stat-chip">
+            <span class="rs-stat-icon">${c.icon}</span>
+            <span class="rs-stat-val">${c.val}</span>
+            <span class="rs-stat-lbl">${c.lbl}</span>
+          </div>`).join('')}
+        </div>` : ''}
+      ${leadersHtml}
+    </div>` : '';
+
+  sec.innerHTML = `
+    <div class="race-summary">
+      <div class="rs-toggle" onclick="toggleSummary()">
+        <h2>🏁 Pregled sesije</h2>
+        <span class="rs-chevron" id="rsChevron">▲</span>
+      </div>
+      <div class="rs-body" id="rsBody">
+        ${podiumHtml}
+        <div class="rs-right">
+          ${timelineHtml}
+          ${statsHtml}
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleSummary() {
+  const body = document.getElementById('rsBody');
+  const chev = document.getElementById('rsChevron');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  if (chev) chev.style.transform = isOpen ? 'rotate(180deg)' : '';
 }
 
 /* ── Reports ───────────────────────────────────────────────────────── */
