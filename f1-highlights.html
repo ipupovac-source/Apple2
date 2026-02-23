@@ -536,12 +536,20 @@ let activeAudio  = null;
 let activeBtn    = null;
 const audios     = {};
 
-/* ── API helper ────────────────────────────────────────────────────── */
-async function get(path) {
+/* ── API helper — retry on 429 ─────────────────────────────────────── */
+async function get(path, attempt = 0) {
   const r = await fetch(API + path);
+  if (r.status === 429) {
+    if (attempt >= 4) throw new Error('API preopterećen (429) — pokušaj za koji trenutak');
+    const wait = [2000, 4000, 8000, 16000][attempt];
+    await new Promise(res => setTimeout(res, wait));
+    return get(path, attempt + 1);
+  }
   if (!r.ok) throw new Error(`HTTP ${r.status} — ${path}`);
   return r.json();
 }
+
+function delay(ms) { return new Promise(res => setTimeout(res, ms)); }
 
 /* ── Error helpers ─────────────────────────────────────────────────── */
 function showErr(msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; }
@@ -666,12 +674,28 @@ async function loadSession() {
   for (const k in audios) delete audios[k];
 
   try {
-    const [drivers, raceCtrl, radio] = await Promise.all([
-      get(`/drivers?session_key=${sk}`),
-      get(`/race_control?session_key=${sk}`),
-      get(`/team_radio?session_key=${sk}`)
-    ]);
+    const steps = ['Vozači…', 'Race control…', 'Team radio…', 'Pozicije…'];
+    function setStep(i) {
+      content.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>${steps[i]} (${i + 1}/${steps.length})</p>
+        </div>`;
+    }
 
+    setStep(0);
+    const drivers = await get(`/drivers?session_key=${sk}`);
+    await delay(300);
+
+    setStep(1);
+    const raceCtrl = await get(`/race_control?session_key=${sk}`);
+    await delay(300);
+
+    setStep(2);
+    const radio = await get(`/team_radio?session_key=${sk}`);
+    await delay(300);
+
+    setStep(3);
     let positions = [];
     try { positions = await get(`/position?session_key=${sk}`); } catch {}
 
