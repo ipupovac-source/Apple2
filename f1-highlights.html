@@ -720,24 +720,38 @@
     .tl-evt-stem { width: 1px; height: 7px; background: #444; }
     .tl-evt-lap  { font-size: 0.52rem; color: var(--muted); font-family: monospace; white-space: nowrap; line-height: 1.3; }
 
-    /* Narrative */
-    .rs-narrative { }
-    .rs-narrative-body {
-      font-size: 0.78rem;
-      line-height: 1.75;
-      color: #ccc;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
+    /* Media reports */
+    .rs-media-loading {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--muted); font-size: 0.72rem; padding: 4px 0;
     }
-    .rs-narr-line { display: flex; align-items: baseline; gap: 7px; }
-    .rs-narr-icon { flex-shrink: 0; font-size: 11px; width: 16px; text-align: center; }
-    .rs-narr-text strong { color: var(--text); font-weight: 600; }
-    .rs-narr-krug {
-      font-size: 0.6rem; font-family: monospace; font-weight: 700;
-      color: var(--muted); background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 3px; padding: 1px 5px; flex-shrink: 0;
+    .spinner-sm {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border); border-top-color: var(--red);
+      border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0;
     }
+    .media-report { }
+    .media-report + .media-report {
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .media-report-source {
+      display: inline-block; font-size: 0.58rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      background: var(--bg4); border: 1px solid var(--border);
+      border-radius: 3px; padding: 2px 7px; margin-bottom: 5px; color: var(--muted);
+    }
+    .media-report-title {
+      font-size: 0.78rem; font-weight: 600; line-height: 1.4;
+      margin-bottom: 4px; color: var(--text);
+    }
+    .media-report-text { font-size: 0.73rem; color: #bbb; line-height: 1.7; }
+    .media-report-link {
+      display: inline-block; margin-top: 6px;
+      font-size: 0.68rem; color: var(--blue); text-decoration: none;
+    }
+    .media-report-link:hover { text-decoration: underline; }
+    .media-report-none { font-size: 0.72rem; color: var(--muted); font-style: italic; }
     /* Stat chips */
     .rs-stat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
     .rs-stat-chip {
@@ -958,10 +972,11 @@ const statusBar  = document.getElementById('statusBar');
 const errorMsg   = document.getElementById('errorMsg');
 
 /* ── Global state ──────────────────────────────────────────────────── */
-let allRadio     = [];
-let allDriverMap = {};
-let allMoments   = [];
-let allPits      = [];
+let allRadio      = [];
+let allDriverMap  = {};
+let allMoments    = [];
+let allPits       = [];
+let currentMeeting = { name: '', year: '' };
 let activeAudio  = null;
 let activeBtn    = null;
 const audios     = {};
@@ -1151,6 +1166,13 @@ async function loadSession() {
     allRadio     = radio;
     allDriverMap = driverMap;
     allPits      = pits;
+
+    const meetingText = meetingSel.options[meetingSel.selectedIndex].text;
+    currentMeeting = {
+      name:    meetingText.split(' — ')[0].trim(),
+      year:    yearSel.value,
+      session: sessionSel.options[sessionSel.selectedIndex].text
+    };
 
     const moments = raceCtrl.filter(isInteresting);
     allMoments    = moments;
@@ -2005,18 +2027,15 @@ function renderRaceSummary(moments, driverMap, positions, pits) {
       ${leadersHtml}
     </div>` : '';
 
-  /* ─ Narrative ─ */
-  const narrLines = buildRaceNarrative(moments, driverMap, positions, pits);
-  const narrativeHtml = narrLines.length ? `
-    <div class="rs-narrative">
+  /* ─ Media narrative placeholder ─ */
+  const mediaReportsPlaceholder = `
+    <div class="rs-narrative" id="mediaReportsSection">
       <div class="rs-section-lbl">Tijek sesije</div>
-      <div class="rs-narrative-body">
-        ${narrLines.map(l => `<div class="rs-narr-line">
-          <span class="rs-narr-icon">${l.icon}</span>
-          <span class="rs-narr-text">${l.html}</span>
-        </div>`).join('')}
+      <div id="mediaReportsDiv" class="rs-media-loading">
+        <div class="spinner-sm"></div>
+        <span>Učitavanje novinskih izvora…</span>
       </div>
-    </div>` : '';
+    </div>`;
 
   sec.innerHTML = `
     <div class="race-summary">
@@ -2029,10 +2048,13 @@ function renderRaceSummary(moments, driverMap, positions, pits) {
         <div class="rs-right">
           ${timelineHtml}
           ${statsHtml}
-          ${narrativeHtml}
+          ${mediaReportsPlaceholder}
         </div>
       </div>
     </div>`;
+
+  /* load journalist sources asynchronously */
+  loadMediaReports(currentMeeting.name, currentMeeting.year);
 }
 
 function toggleSummary() {
@@ -2042,6 +2064,109 @@ function toggleSummary() {
   const isOpen = body.style.display !== 'none';
   body.style.display = isOpen ? 'none' : '';
   if (chev) chev.style.transform = isOpen ? 'rotate(180deg)' : '';
+}
+
+/* ── Media reports (journalist sources) ────────────────────────────── */
+
+async function fetchWikipedia(meetingName, year) {
+  /* Build title like "2024_Bahrain_Grand_Prix" */
+  const title = `${year}_${meetingName.replace(/\s+/g, '_')}`;
+  try {
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (j.type === 'disambiguation' || !j.extract) return null;
+    /* take first ~4 sentences */
+    const sentences = j.extract.match(/[^.!?]+[.!?]+/g) || [];
+    const text = sentences.slice(0, 4).join(' ').trim();
+    return {
+      source:  'Wikipedia',
+      color:   '#3366cc',
+      title:   j.title,
+      text:    text || j.extract.slice(0, 400),
+      url:     j.content_urls && j.content_urls.desktop ? j.content_urls.desktop.page : `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`
+    };
+  } catch { return null; }
+}
+
+async function fetchGuardian(meetingName, year) {
+  try {
+    const q = encodeURIComponent(`Formula 1 ${meetingName} ${year}`);
+    const url = `https://content.guardianapis.com/search?q=${q}&section=sport&order-by=relevance&api-key=test&show-fields=trailText,headline&page-size=3`;
+    const r = await fetch(url);
+    if (!r.ok) return [];
+    const j = await r.json();
+    const results = (j.response && j.response.results) || [];
+    return results.slice(0, 2).map(item => ({
+      source: 'The Guardian',
+      color:  '#005689',
+      title:  (item.fields && item.fields.headline) || item.webTitle,
+      text:   (item.fields && item.fields.trailText) || '',
+      url:    item.webUrl
+    })).filter(a => a.title);
+  } catch { return []; }
+}
+
+async function fetchAutosportRSS(meetingName, year) {
+  try {
+    const rssUrl = 'https://www.autosport.com/rss/f1/news';
+    const proxy  = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
+    const r = await fetch(proxy);
+    if (!r.ok) return [];
+    const j = await r.json();
+    const parser = new DOMParser();
+    const doc    = parser.parseFromString(j.contents, 'text/xml');
+    const items  = Array.from(doc.querySelectorAll('item'));
+    const keywords = meetingName.toLowerCase().split(' ').filter(w => w.length > 3);
+    const yearStr  = String(year);
+    const matched  = items.filter(item => {
+      const t = (item.querySelector('title')?.textContent || '').toLowerCase();
+      return t.includes(yearStr) && keywords.some(k => t.includes(k));
+    }).slice(0, 2);
+    return matched.map(item => {
+      const title = item.querySelector('title')?.textContent?.trim() || '';
+      const desc  = item.querySelector('description')?.textContent?.trim() || '';
+      const link  = item.querySelector('link')?.textContent?.trim() || '';
+      /* strip HTML tags from description */
+      const text  = desc.replace(/<[^>]*>/g, '').slice(0, 300);
+      return { source: 'Autosport', color: '#e5312b', title, text, url: link };
+    }).filter(a => a.title);
+  } catch { return []; }
+}
+
+async function loadMediaReports(meetingName, year) {
+  const div = document.getElementById('mediaReportsDiv');
+  if (!div || !meetingName || !year) {
+    if (div) div.innerHTML = '<em style="color:var(--muted);font-size:0.72rem">Podaci o sesiji nisu dostupni.</em>';
+    return;
+  }
+
+  /* fetch all sources concurrently */
+  const [wiki, guardianArr, autosportArr] = await Promise.all([
+    fetchWikipedia(meetingName, year),
+    fetchGuardian(meetingName, year),
+    fetchAutosportRSS(meetingName, year)
+  ]);
+
+  const reports = [];
+  if (wiki) reports.push(wiki);
+  guardianArr.forEach(a => reports.push(a));
+  autosportArr.forEach(a => reports.push(a));
+
+  if (!reports.length) {
+    div.innerHTML = `<em style="color:var(--muted);font-size:0.72rem">Nije pronađen novinarski sadržaj za ovu utrku.</em>`;
+    return;
+  }
+
+  div.className = ''; /* remove spinner class */
+  div.innerHTML = reports.map(rp => `
+    <div class="media-report">
+      <span class="media-report-source" style="background:${escAttr(rp.color)}">${escHtml(rp.source)}</span>
+      <div class="media-report-title">${escHtml(rp.title)}</div>
+      ${rp.text ? `<div class="media-report-text">${escHtml(rp.text)}</div>` : ''}
+      ${rp.url  ? `<a class="media-report-link" href="${escAttr(rp.url)}" target="_blank" rel="noopener noreferrer">Čitaj više ↗</a>` : ''}
+    </div>`).join('');
 }
 
 /* ── Reports ───────────────────────────────────────────────────────── */
