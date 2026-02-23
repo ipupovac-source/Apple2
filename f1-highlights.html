@@ -380,13 +380,21 @@
       padding: 18px 20px;
       border-top: 1px solid var(--border);
     }
-    .chart-wrap h2 {
+    .chart-wrap > h2 {
       font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: var(--muted);
-      margin-bottom: 14px;
+      margin-bottom: 6px;
+    }
+    .chart-hint {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .chart-canvas-wrap {
+      position: relative;
     }
     #posChart {
       display: block;
@@ -394,11 +402,66 @@
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: 4px;
+      cursor: crosshair;
     }
+
+    /* ── Chart tooltip ────────────────────────────────────────── */
+    .chart-tooltip {
+      position: absolute;
+      top: 14px;
+      pointer-events: none;
+      background: rgba(14,14,14,0.96);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 11px;
+      font-size: 0.68rem;
+      z-index: 10;
+      min-width: 130px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      display: none;
+    }
+    .tt-time {
+      color: var(--muted);
+      font-family: monospace;
+      font-size: 0.65rem;
+      margin-bottom: 6px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tt-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 0;
+    }
+    .tt-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .tt-pos {
+      font-weight: 700;
+      min-width: 22px;
+      font-family: monospace;
+      font-size: 0.68rem;
+    }
+    .tt-drv {
+      font-family: monospace;
+      font-size: 0.68rem;
+      color: var(--text);
+    }
+    .tt-highlighted {
+      background: rgba(255,255,255,0.06);
+      border-radius: 3px;
+      padding: 2px 4px;
+      margin: -2px -4px;
+    }
+
+    /* ── Legend ───────────────────────────────────────────────── */
     .legend {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 6px;
       margin-top: 10px;
     }
     .legend-item {
@@ -407,11 +470,131 @@
       gap: 5px;
       font-size: 0.68rem;
       color: var(--muted);
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 3px 7px;
+      border: 1px solid transparent;
+      transition: background .12s, border-color .12s, opacity .12s;
+      user-select: none;
     }
-    .legend-bar { width: 16px; height: 3px; border-radius: 2px; }
+    .legend-item:hover { background: var(--bg3); color: var(--text); }
+    .legend-item.hl { background: var(--bg3); border-color: var(--border); color: var(--text); }
+    .legend-item.dim { opacity: 0.3; }
+    .legend-bar { width: 16px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+
+    /* ── Reports ──────────────────────────────────────────────── */
+    .reports-wrap {
+      padding: 18px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .reports-wrap > h2 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .report-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .report-card-hdr {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      background: var(--bg3);
+    }
+    .report-card-body { padding: 6px 0; }
+
+    /* Position table */
+    .pos-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
+    .pos-table th {
+      text-align: left;
+      padding: 4px 12px;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pos-table td {
+      padding: 5px 12px;
+      border-bottom: 1px solid rgba(46,46,46,0.5);
+      vertical-align: middle;
+    }
+    .pos-table tbody tr:last-child td { border-bottom: none; }
+    .pos-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
+    .gain { color: var(--green); font-weight: 700; }
+    .lose { color: var(--danger); font-weight: 700; }
+    .same { color: var(--muted); }
+
+    /* Radio bars */
+    .radio-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+    }
+    .radio-bar-drv {
+      font-family: monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      min-width: 32px;
+      flex-shrink: 0;
+    }
+    .radio-bar-track {
+      flex: 1;
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .radio-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+    .radio-bar-count {
+      font-size: 0.65rem;
+      color: var(--muted);
+      min-width: 22px;
+      text-align: right;
+      flex-shrink: 0;
+      font-family: monospace;
+    }
+
+    /* Moment summary */
+    .moment-sum-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 12px;
+      border-bottom: 1px solid rgba(46,46,46,0.4);
+    }
+    .moment-sum-row:last-child { border-bottom: none; }
+    .moment-sum-icon { font-size: 14px; flex-shrink: 0; width: 20px; text-align: center; }
+    .moment-sum-label { flex: 1; font-size: 0.72rem; }
+    .moment-sum-count {
+      font-family: monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text);
+    }
 
     /* ── Empty state ──────────────────────────────────────────── */
-    .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+    .empty { padding: 30px 20px; text-align: center; color: var(--muted); }
     .empty .icon { font-size: 2rem; margin-bottom: 8px; }
     .empty p { font-size: 0.78rem; }
 
@@ -457,6 +640,9 @@
 
       .chart-wrap { padding: 14px; }
       #posChart { height: 220px !important; }
+
+      .reports-wrap { padding: 14px; }
+      .reports-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -535,6 +721,16 @@ let allDriverMap = {};
 let activeAudio  = null;
 let activeBtn    = null;
 const audios     = {};
+
+/* ── Chart state ───────────────────────────────────────────────────── */
+const CS = {
+  canvas: null, ctx: null,
+  byDriver: {}, drivers: [], driverPts: {}, driverMap: {},
+  tMin: 0, tMax: 0, tRange: 1, numPos: 20,
+  pad: {}, cW: 0, cH: 0,
+  highlighted: null,
+  SAMPLES: 200
+};
 
 /* ── API helper — retry on 429 ─────────────────────────────────────── */
 async function get(path, attempt = 0) {
@@ -754,13 +950,19 @@ function render(moments, radio, driverMap, positions) {
     </div>
     <div class="chart-wrap" id="chartWrap" style="display:none">
       <h2>Pozicije kroz sesiju</h2>
-      <canvas id="posChart" height="300"></canvas>
+      <p class="chart-hint">Prijeđi mišem za detalje &nbsp;·&nbsp; Klikni liniju ili legendu za highlight</p>
+      <div class="chart-canvas-wrap">
+        <canvas id="posChart" height="320"></canvas>
+        <div id="chartTooltip" class="chart-tooltip"></div>
+      </div>
       <div class="legend" id="legend"></div>
-    </div>`;
+    </div>
+    <div id="reportsSection"></div>`;
 
   renderMoments(moments);
   renderRadio(radio, driverMap);
   if (positions.length > 0) renderChart(positions, driverMap);
+  renderReports(moments, radio, driverMap, positions);
 }
 
 /* ── Mobile tab switch ─────────────────────────────────────────────── */
@@ -948,7 +1150,22 @@ function seekTo(e, bar, idx) {
   audios[idx].currentTime = ratio * audios[idx].duration;
 }
 
-/* ── Position chart (Canvas) ───────────────────────────────────────── */
+/* ── Position interpolation ────────────────────────────────────────── */
+function interpolate(arr, t) {
+  if (!arr.length) return 1;
+  if (t <= arr[0].t) return arr[0].pos;
+  if (t >= arr[arr.length - 1].t) return arr[arr.length - 1].pos;
+  let lo = 0, hi = arr.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (arr[mid].t <= t) lo = mid; else hi = mid;
+  }
+  if (arr[lo].t === arr[hi].t) return arr[lo].pos;
+  const ratio = (t - arr[lo].t) / (arr[hi].t - arr[lo].t);
+  return arr[lo].pos + ratio * (arr[hi].pos - arr[lo].pos);
+}
+
+/* ── Position chart setup ──────────────────────────────────────────── */
 function renderChart(positions, driverMap) {
   const wrap = document.getElementById('chartWrap');
 
@@ -962,61 +1179,12 @@ function renderChart(positions, driverMap) {
   const drivers = Object.keys(byDriver).filter(d => byDriver[d].length > 1);
   if (!drivers.length) return;
 
-  const SAMPLES = 200;
-  const tMin = Math.min(...drivers.map(d => byDriver[d][0].t));
-  const tMax = Math.max(...drivers.map(d => byDriver[d][byDriver[d].length - 1].t));
-  const tRange = tMax - tMin || 1;
-
-  function interpolate(arr, t) {
-    let lo = 0, hi = arr.length - 1;
-    while (lo < hi - 1) {
-      const mid = (lo + hi) >> 1;
-      if (arr[mid].t <= t) lo = mid; else hi = mid;
-    }
-    if (arr[lo].t === arr[hi].t) return arr[lo].pos;
-    const ratio = (t - arr[lo].t) / (arr[hi].t - arr[lo].t);
-    return arr[lo].pos + ratio * (arr[hi].pos - arr[lo].pos);
-  }
-
-  const maxPos = Math.max(...drivers.flatMap(d => byDriver[d].map(p => p.pos)));
-  const numPos = Math.min(maxPos, 22);
-
-  wrap.style.display = 'block';
-  const canvas = document.getElementById('posChart');
-  const W = canvas.parentElement.clientWidth - 40;
-  canvas.width  = Math.max(W, 300);
-  canvas.height = canvas.getAttribute('height') || 300;
-
-  const ctx = canvas.getContext('2d');
-  const pad = { top: 18, right: 50, bottom: 34, left: 36 };
-  const cW  = canvas.width  - pad.left - pad.right;
-  const cH  = canvas.height - pad.top  - pad.bottom;
-
-  ctx.fillStyle = '#181818';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.strokeStyle = '#2a2a2a';
-  ctx.lineWidth = 1;
-  for (let p = 1; p <= numPos; p++) {
-    const y = pad.top + ((p - 1) / (numPos - 1)) * cH;
-    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
-    if (p === 1 || p % 5 === 0) {
-      ctx.fillStyle = '#555'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
-      ctx.fillText(p, pad.left - 5, y + 4);
-    }
-  }
-  for (let i = 0; i <= 10; i++) {
-    const x = pad.left + (i / 10) * cW;
-    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + cH); ctx.stroke();
-  }
-
-  ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('Tijek sesije →', pad.left + cW / 2, canvas.height - 4);
-  ctx.save(); ctx.translate(11, pad.top + cH / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('Pozicija', 0, 0); ctx.restore();
-
-  const legend = document.getElementById('legend');
-  legend.innerHTML = '';
+  const SAMPLES = CS.SAMPLES;
+  const tMin    = Math.min(...drivers.map(d => byDriver[d][0].t));
+  const tMax    = Math.max(...drivers.map(d => byDriver[d][byDriver[d].length - 1].t));
+  const tRange  = tMax - tMin || 1;
+  const maxPos  = Math.max(...drivers.flatMap(d => byDriver[d].map(p => p.pos)));
+  const numPos  = Math.min(maxPos, 22);
 
   drivers.sort((a, b) => {
     const pa = byDriver[a][byDriver[a].length - 1].pos;
@@ -1024,37 +1192,358 @@ function renderChart(positions, driverMap) {
     return pa - pb;
   });
 
-  drivers.forEach(dNum => {
-    const driver = driverMap[dNum] || {};
-    const color  = driver.team_colour ? `#${driver.team_colour}` : '#888';
-    const abbr   = driver.name_acronym || `#${dNum}`;
+  wrap.style.display = 'block';
+  const canvas = document.getElementById('posChart');
+  const W      = canvas.parentElement.clientWidth;
+  canvas.width  = Math.max(W, 300);
+  canvas.height = parseInt(canvas.getAttribute('height')) || 320;
 
-    const pts = Array.from({ length: SAMPLES }, (_, i) => {
+  const pad = { top: 20, right: 52, bottom: 34, left: 38 };
+  const cW  = canvas.width  - pad.left - pad.right;
+  const cH  = canvas.height - pad.top  - pad.bottom;
+
+  /* Pre-compute interpolated sample points for every driver */
+  const driverPts = {};
+  drivers.forEach(dNum => {
+    driverPts[dNum] = Array.from({ length: SAMPLES }, (_, i) => {
       const t   = tMin + (i / (SAMPLES - 1)) * tRange;
       const pos = interpolate(byDriver[dNum], t);
       return { x: pad.left + (i / (SAMPLES - 1)) * cW,
-               y: pad.top  + ((pos - 1) / (numPos - 1)) * cH };
+               y: pad.top  + ((pos - 1) / (numPos - 1)) * cH,
+               pos, t };
     });
+  });
+
+  /* Store state */
+  CS.canvas = canvas;
+  CS.ctx = canvas.getContext('2d');
+  CS.byDriver = byDriver;
+  CS.drivers  = drivers;
+  CS.driverPts = driverPts;
+  CS.driverMap = driverMap;
+  CS.tMin = tMin; CS.tMax = tMax; CS.tRange = tRange;
+  CS.numPos = numPos;
+  CS.pad = pad; CS.cW = cW; CS.cH = cH;
+  CS.highlighted = null;
+
+  drawChart(null);
+
+  /* Build clickable legend */
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  drivers.forEach(dNum => {
+    const d     = driverMap[dNum] || {};
+    const color = d.team_colour ? `#${d.team_colour}` : '#888';
+    const abbr  = d.name_acronym || `#${dNum}`;
+    const li = document.createElement('div');
+    li.className = 'legend-item';
+    li.dataset.driver = dNum;
+    li.title = `${d.full_name || abbr} — klikni za highlight`;
+    li.innerHTML = `<div class="legend-bar" style="background:${color}"></div><span>${escHtml(abbr)}</span>`;
+    li.addEventListener('click', () => toggleChartHighlight(dNum));
+    legend.appendChild(li);
+  });
+
+  /* Mouse events */
+  canvas.addEventListener('mousemove', onChartMouseMove);
+  canvas.addEventListener('mouseleave', onChartMouseLeave);
+  canvas.addEventListener('click', onChartClick);
+}
+
+/* ── Draw chart ────────────────────────────────────────────────────── */
+function drawChart(hoverX) {
+  const { canvas, ctx, drivers, driverPts, driverMap, numPos, pad, cW, cH, highlighted, SAMPLES } = CS;
+  if (!canvas || !ctx) return;
+
+  /* Background */
+  ctx.fillStyle = '#181818';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  /* Grid */
+  ctx.lineWidth = 1;
+  for (let p = 1; p <= numPos; p++) {
+    const y = pad.top + ((p - 1) / (numPos - 1)) * cH;
+    ctx.strokeStyle = p === 1 ? '#3a3a3a' : '#242424';
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    ctx.fillStyle = '#555';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(p, pad.left - 5, y + 4);
+  }
+  for (let i = 0; i <= 10; i++) {
+    const x = pad.left + (i / 10) * cW;
+    ctx.strokeStyle = '#242424';
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + cH); ctx.stroke();
+  }
+
+  ctx.fillStyle = '#444';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Tijek sesije →', pad.left + cW / 2, canvas.height - 5);
+  ctx.save();
+  ctx.translate(11, pad.top + cH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Pozicija', 0, 0);
+  ctx.restore();
+
+  /* Driver lines */
+  drivers.forEach(dNum => {
+    const d    = driverMap[dNum] || {};
+    const color = d.team_colour ? `#${d.team_colour}` : '#888';
+    const pts   = driverPts[dNum];
+    const isHL  = highlighted === dNum;
+    const isDim = highlighted !== null && !isHL;
 
     ctx.beginPath();
     ctx.strokeStyle = color;
-    ctx.lineWidth   = 1.5;
-    ctx.globalAlpha = 0.85;
+    ctx.lineWidth   = isHL ? 3 : 1.5;
+    ctx.globalAlpha = isDim ? 0.15 : (isHL ? 1 : 0.82);
     pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
     ctx.stroke();
-    ctx.globalAlpha = 1;
 
+    /* Dot at end */
     const last = pts[pts.length - 1];
     ctx.fillStyle = color;
-    ctx.font = 'bold 9px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(abbr, last.x + 3, last.y + 3);
+    ctx.beginPath();
+    ctx.arc(last.x, last.y, isHL ? 4 : 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
 
-    const li = document.createElement('div');
-    li.className = 'legend-item';
-    li.innerHTML = `<div class="legend-bar" style="background:${color}"></div><span>${abbr}</span>`;
-    legend.appendChild(li);
+    /* Label */
+    const abbr = d.name_acronym || `#${dNum}`;
+    ctx.fillStyle = color;
+    ctx.font = isHL ? 'bold 10px monospace' : '9px monospace';
+    ctx.textAlign = 'left';
+    ctx.globalAlpha = isDim ? 0.15 : 1;
+    ctx.fillText(abbr, last.x + 5, last.y + 3);
+    ctx.globalAlpha = 1;
   });
+
+  /* Hover cursor line */
+  if (hoverX !== null && hoverX >= pad.left && hoverX <= pad.left + cW) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(hoverX, pad.top);
+    ctx.lineTo(hoverX, pad.top + cH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+/* ── Chart helpers ─────────────────────────────────────────────────── */
+function getDriverPositionsAtX(canvasX) {
+  const { drivers, driverPts, driverMap, SAMPLES, pad, cW } = CS;
+  const idx = Math.max(0, Math.min(SAMPLES - 1,
+    Math.round(((canvasX - pad.left) / cW) * (SAMPLES - 1))));
+  return drivers.map(dNum => {
+    const pt = driverPts[dNum][idx];
+    const d  = driverMap[dNum] || {};
+    return {
+      dNum,
+      pos:   pt.pos,
+      y:     pt.y,
+      abbr:  d.name_acronym || `#${dNum}`,
+      color: d.team_colour ? `#${d.team_colour}` : '#888'
+    };
+  }).sort((a, b) => a.pos - b.pos);
+}
+
+/* ── Chart mouse events ────────────────────────────────────────────── */
+function onChartMouseMove(e) {
+  const canvas  = CS.canvas;
+  const rect    = canvas.getBoundingClientRect();
+  const scaleX  = canvas.width / rect.width;
+  const canvasX = (e.clientX - rect.left) * scaleX;
+
+  drawChart(canvasX);
+
+  const tooltip = document.getElementById('chartTooltip');
+  if (!tooltip) return;
+
+  if (canvasX < CS.pad.left || canvasX > CS.pad.left + CS.cW) {
+    tooltip.style.display = 'none';
+    return;
+  }
+
+  const rows = getDriverPositionsAtX(canvasX);
+  const { tMin, tRange, pad, cW } = CS;
+  const t       = tMin + ((canvasX - pad.left) / cW) * tRange;
+  const timeStr = new Date(t).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  /* Show all drivers, highlight active one */
+  tooltip.innerHTML = `
+    <div class="tt-time">${timeStr}</div>
+    ${rows.map(d => {
+      const isHL = CS.highlighted === d.dNum;
+      return `<div class="tt-row${isHL ? ' tt-highlighted' : ''}">
+        <div class="tt-dot" style="background:${d.color}"></div>
+        <span class="tt-pos">P${Math.round(d.pos)}</span>
+        <span class="tt-drv">${escHtml(d.abbr)}</span>
+      </div>`;
+    }).join('')}`;
+
+  tooltip.style.display = 'block';
+
+  /* Position tooltip: right of cursor, flip if near right edge */
+  const wrapRect = canvas.parentElement.getBoundingClientRect();
+  const ttW = 150;
+  let ttLeft = e.clientX - wrapRect.left + 14;
+  if (ttLeft + ttW > wrapRect.width - 4) ttLeft = e.clientX - wrapRect.left - ttW - 14;
+  tooltip.style.left = Math.max(4, ttLeft) + 'px';
+  tooltip.style.top  = '14px';
+}
+
+function onChartMouseLeave() {
+  drawChart(null);
+  const tooltip = document.getElementById('chartTooltip');
+  if (tooltip) tooltip.style.display = 'none';
+}
+
+function onChartClick(e) {
+  const canvas  = CS.canvas;
+  const rect    = canvas.getBoundingClientRect();
+  const scaleX  = canvas.width / rect.width;
+  const scaleY  = canvas.height / rect.height;
+  const canvasX = (e.clientX - rect.left) * scaleX;
+  const canvasY = (e.clientY - rect.top)  * scaleY;
+
+  if (canvasX < CS.pad.left || canvasX > CS.pad.left + CS.cW) return;
+
+  /* Find driver whose line is nearest to the click y */
+  const rows    = getDriverPositionsAtX(canvasX);
+  let nearest   = null;
+  let minDist   = Infinity;
+  rows.forEach(d => {
+    const dist = Math.abs(d.y - canvasY);
+    if (dist < minDist) { minDist = dist; nearest = d.dNum; }
+  });
+
+  if (nearest && minDist < 28) toggleChartHighlight(nearest);
+}
+
+function toggleChartHighlight(dNum) {
+  CS.highlighted = CS.highlighted === dNum ? null : dNum;
+  drawChart(null);
+
+  const legend = document.getElementById('legend');
+  if (!legend) return;
+  legend.querySelectorAll('.legend-item').forEach(li => {
+    const isThis = li.dataset.driver === String(dNum);
+    li.classList.toggle('hl',  isThis && CS.highlighted !== null);
+    li.classList.toggle('dim', CS.highlighted !== null && !isThis);
+  });
+}
+
+/* ── Reports ───────────────────────────────────────────────────────── */
+function renderReports(moments, radio, driverMap, positions) {
+  const sec = document.getElementById('reportsSection');
+  if (!sec) return;
+
+  /* ─ Report 1: Position changes ─ */
+  const byDrv = {};
+  positions.forEach(p => {
+    if (!p.driver_number || p.position == null) return;
+    const dn = String(p.driver_number);
+    const t  = new Date(p.date).getTime();
+    if (!byDrv[dn]) byDrv[dn] = { firstT: Infinity, lastT: -Infinity, firstPos: 0, lastPos: 0 };
+    if (t < byDrv[dn].firstT) { byDrv[dn].firstT = t; byDrv[dn].firstPos = p.position; }
+    if (t > byDrv[dn].lastT)  { byDrv[dn].lastT  = t; byDrv[dn].lastPos  = p.position; }
+  });
+
+  const posRows = Object.entries(byDrv)
+    .map(([dn, v]) => {
+      const d     = driverMap[dn] || {};
+      const abbr  = d.name_acronym || `#${dn}`;
+      const color = d.team_colour ? `#${d.team_colour}` : '#888';
+      const start = Math.round(v.firstPos);
+      const end   = Math.round(v.lastPos);
+      const delta = start - end;  /* positive = gained positions */
+      return { abbr, color, start, end, delta };
+    })
+    .sort((a, b) => a.end - b.end);
+
+  const posHtml = posRows.length ? `
+    <table class="pos-table">
+      <thead><tr>
+        <th>P</th><th>Vozač</th><th>Start</th><th>Kraj</th><th>Δ</th>
+      </tr></thead>
+      <tbody>
+        ${posRows.map((r, i) => `
+          <tr>
+            <td><strong>${i + 1}</strong></td>
+            <td><span class="drv-badge" style="border-left-color:${r.color}">${escHtml(r.abbr)}</span></td>
+            <td>${r.start}</td>
+            <td>${r.end}</td>
+            <td class="${r.delta > 0 ? 'gain' : r.delta < 0 ? 'lose' : 'same'}">
+              ${r.delta > 0 ? '+' + r.delta : r.delta === 0 ? '—' : r.delta}
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`
+    : `<div class="empty"><p>Nema podataka o pozicijama</p></div>`;
+
+  /* ─ Report 2: Radio activity ─ */
+  const counts = {};
+  radio.forEach(r => {
+    const dn = String(r.driver_number);
+    counts[dn] = (counts[dn] || 0) + 1;
+  });
+  const maxCount = Math.max(1, ...Object.values(counts));
+  const radioHtml = Object.entries(counts).length ? Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([dn, cnt]) => {
+      const d     = driverMap[dn] || {};
+      const abbr  = d.name_acronym || `#${dn}`;
+      const color = d.team_colour ? `#${d.team_colour}` : '#888';
+      const pct   = (cnt / maxCount) * 100;
+      return `
+        <div class="radio-bar-row">
+          <span class="radio-bar-drv" style="color:${color}">${escHtml(abbr)}</span>
+          <div class="radio-bar-track">
+            <div class="radio-bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <span class="radio-bar-count">${cnt}</span>
+        </div>`;
+    }).join('')
+    : `<div class="empty"><p>Nema radio poruka</p></div>`;
+
+  /* ─ Report 3: Moment summary ─ */
+  const groups = {};
+  moments.forEach(m => {
+    const { icon, label } = classify(m);
+    if (!groups[label]) groups[label] = { icon, count: 0 };
+    groups[label].count++;
+  });
+  const momentHtml = Object.keys(groups).length ? Object.entries(groups)
+    .sort((a, b) => b[1].count - a[1].count)
+    .map(([label, g]) => `
+      <div class="moment-sum-row">
+        <span class="moment-sum-icon">${g.icon}</span>
+        <span class="moment-sum-label">${escHtml(label)}</span>
+        <span class="moment-sum-count">${g.count}</span>
+      </div>`).join('')
+    : `<div class="empty"><p>Nema ključnih trenutaka</p></div>`;
+
+  sec.innerHTML = `
+    <div class="reports-wrap">
+      <h2>Statistike sesije</h2>
+      <div class="reports-grid">
+        <div class="report-card">
+          <div class="report-card-hdr">📊 Promjena pozicija</div>
+          <div class="report-card-body">${posHtml}</div>
+        </div>
+        <div class="report-card">
+          <div class="report-card-hdr">📻 Radio aktivnost</div>
+          <div class="report-card-body">${radioHtml}</div>
+        </div>
+        <div class="report-card">
+          <div class="report-card-hdr">🏁 Pregled zastava i događaja</div>
+          <div class="report-card-body">${momentHtml}</div>
+        </div>
+      </div>
+    </div>`;
 }
 
 /* ── Utils ─────────────────────────────────────────────────────────── */
