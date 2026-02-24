@@ -746,6 +746,7 @@
       margin-bottom: 4px; color: var(--text);
     }
     .media-report-text { font-size: 0.73rem; color: #bbb; line-height: 1.7; }
+    .media-report-text p { margin: 0 0 6px; }
     .media-report-link {
       display: inline-block; margin-top: 6px;
       font-size: 0.68rem; color: var(--blue); text-decoration: none;
@@ -2072,33 +2073,57 @@ async function fetchWikipedia(meetingName, year) {
   /* Build title like "2024_Bahrain_Grand_Prix" */
   const title = `${year}_${meetingName.replace(/\s+/g, '_')}`;
   try {
-    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    /* MediaWiki action API — returns full intro section, CORS-friendly via origin=* */
+    const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}` +
+                `&prop=extracts&exintro=1&explaintext=1&redirects=1&format=json&origin=*`;
     const r = await fetch(url);
     if (!r.ok) return null;
     const j = await r.json();
-    if (j.type === 'disambiguation' || !j.extract) return null;
-    /* take first ~4 sentences */
-    const sentences = j.extract.match(/[^.!?]+[.!?]+/g) || [];
-    const text = sentences.slice(0, 4).join(' ').trim();
+    const pages = j.query && j.query.pages;
+    if (!pages) return null;
+    const page = Object.values(pages)[0];
+    if (!page || page.missing !== undefined || !page.extract) return null;
+
+    /* Validate: page title must mention the year (avoids disambiguation pages matching) */
+    if (!page.title.includes(String(year))) return null;
+
+    /* Take first 3 non-trivial paragraphs */
+    const paragraphs = page.extract.split(/\n+/).filter(p => p.trim().length > 80).slice(0, 3);
+    const text = paragraphs.join('\n\n').trim();
+
     return {
-      source:  'Wikipedia',
-      color:   '#3366cc',
-      title:   j.title,
-      text:    text || j.extract.slice(0, 400),
-      url:     j.content_urls && j.content_urls.desktop ? j.content_urls.desktop.page : `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`
+      source: 'Wikipedia',
+      color:  '#3366cc',
+      title:  page.title,
+      text:   text || page.extract.slice(0, 600),
+      url:    `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`
     };
   } catch { return null; }
 }
 
 async function fetchGuardian(meetingName, year) {
   try {
-    const q = encodeURIComponent(`Formula 1 ${meetingName} ${year}`);
-    const url = `https://content.guardianapis.com/search?q=${q}&section=sport&order-by=relevance&api-key=test&show-fields=trailText,headline&page-size=3`;
+    /* Use quoted phrase + year to narrow results; also restrict to that calendar year */
+    const q   = encodeURIComponent(`"${meetingName}" ${year}`);
+    const url = `https://content.guardianapis.com/search?q=${q}&section=sport&order-by=relevance` +
+                `&from-date=${year}-01-01&to-date=${year}-12-31` +
+                `&api-key=test&show-fields=trailText,headline&page-size=5`;
     const r = await fetch(url);
     if (!r.ok) return [];
     const j = await r.json();
     const results = (j.response && j.response.results) || [];
-    return results.slice(0, 2).map(item => ({
+
+    /* Keywords from race name — skip common F1 words */
+    const skip = new Set(['grand', 'prix', 'formula', 'race', 'the', 'of']);
+    const kws  = meetingName.toLowerCase().split(/\s+/).filter(w => w.length > 3 && !skip.has(w));
+
+    /* Only keep articles where the headline contains at least one location keyword */
+    const filtered = results.filter(item => {
+      const h = ((item.fields && item.fields.headline) || item.webTitle || '').toLowerCase();
+      return kws.some(k => h.includes(k));
+    });
+
+    return filtered.slice(0, 2).map(item => ({
       source: 'The Guardian',
       color:  '#005689',
       title:  (item.fields && item.fields.headline) || item.webTitle,
@@ -2164,7 +2189,7 @@ async function loadMediaReports(meetingName, year) {
     <div class="media-report">
       <span class="media-report-source" style="background:${escAttr(rp.color)}">${escHtml(rp.source)}</span>
       <div class="media-report-title">${escHtml(rp.title)}</div>
-      ${rp.text ? `<div class="media-report-text">${escHtml(rp.text)}</div>` : ''}
+      ${rp.text ? `<div class="media-report-text">${rp.text.split('\n\n').map(p => `<p>${escHtml(p.trim())}</p>`).join('')}</div>` : ''}
       ${rp.url  ? `<a class="media-report-link" href="${escAttr(rp.url)}" target="_blank" rel="noopener noreferrer">Čitaj više ↗</a>` : ''}
     </div>`).join('');
 }
