@@ -1447,10 +1447,13 @@ function renderChart(positions, driverMap) {
 
   const byDriver = {};
   positions.forEach(p => {
-    if (!p.driver_number || p.position == null) return;
+    if (!p.driver_number || p.position == null || p.position < 1) return; /* skip pos=0 pre-race */
     if (!byDriver[p.driver_number]) byDriver[p.driver_number] = [];
     byDriver[p.driver_number].push({ t: new Date(p.date).getTime(), pos: p.position });
   });
+
+  /* Sort each driver's array by time — interpolate() requires it */
+  Object.keys(byDriver).forEach(d => byDriver[d].sort((a, b) => a.t - b.t));
 
   const drivers = Object.keys(byDriver).filter(d => byDriver[d].length > 1);
   if (!drivers.length) return;
@@ -1462,10 +1465,12 @@ function renderChart(positions, driverMap) {
   const maxPos  = Math.max(...drivers.flatMap(d => byDriver[d].map(p => p.pos)));
   const numPos  = Math.min(maxPos, 22);
 
+  /* Sort ascending by final position for the legend — but drawing uses this reversed
+     so that P1 ends up on top of the z-stack (drawn last) */
   drivers.sort((a, b) => {
     const pa = byDriver[a][byDriver[a].length - 1].pos;
     const pb = byDriver[b][byDriver[b].length - 1].pos;
-    return pa - pb;
+    return pa - pb; /* P1 first in array → drawn last in drawChart (see [...].reverse()) */
   });
 
   wrap.style.display = 'block';
@@ -1562,9 +1567,10 @@ function drawChart(hoverX) {
   ctx.fillText('Pozicija', 0, 0);
   ctx.restore();
 
-  /* Driver lines */
-  drivers.forEach(dNum => {
-    const d    = driverMap[dNum] || {};
+  /* Driver lines — draw P20→P1 (reversed) so P1 ends on top of z-stack.
+     Highlighted driver is always drawn last regardless of position. */
+  function drawDriverLine(dNum) {
+    const d     = driverMap[dNum] || {};
     const color = d.team_colour ? `#${d.team_colour}` : '#888';
     const pts   = driverPts[dNum];
     const isHL  = highlighted === dNum;
@@ -1593,7 +1599,14 @@ function drawChart(hoverX) {
     ctx.globalAlpha = isDim ? 0.15 : 1;
     ctx.fillText(abbr, last.x + 5, last.y + 3);
     ctx.globalAlpha = 1;
+  }
+
+  /* Reversed so P1 (index 0) is drawn last (on top) */
+  [...drivers].reverse().forEach(dNum => {
+    if (dNum !== highlighted) drawDriverLine(dNum);
   });
+  /* Highlighted driver always last = always on top */
+  if (highlighted) drawDriverLine(highlighted);
 
   /* Hover cursor line */
   if (hoverX !== null && hoverX >= pad.left && hoverX <= pad.left + cW) {
