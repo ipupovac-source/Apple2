@@ -48,16 +48,12 @@ terrainCanvas.height = GAME_HEIGHT;
 
 // ==================== CHARACTER TYPES (inspired by photos) ====================
 const CHARACTER_TYPES = [
-  { name:'BluePat',   hairStyle:'wavy',  hairColor:'#1a1008', shirtColor:'#2b4499', shirtColor2:'#1e3377', glasses:false, bald:false, tie:null,     pantsColor:'#444' },
-  { name:'RedGlass',  hairStyle:'short', hairColor:'#1a1008', shirtColor:'#8b2222', shirtColor2:'#6b1818', glasses:true,  bald:false, tie:null,     pantsColor:'#333' },
-  { name:'CreamJkt',  hairStyle:'short', hairColor:'#5a4a2a', shirtColor:'#ccc0a0', shirtColor2:'#b0a888', glasses:false, bald:false, tie:null,     pantsColor:'#444' },
-  { name:'Stripes',   hairStyle:'short', hairColor:'#888888', shirtColor:'#7799bb', shirtColor2:'#6688aa', glasses:false, bald:false, tie:null,     pantsColor:'#333' },
-  { name:'Baldy',     hairStyle:'none',  hairColor:null,      shirtColor:'#ddcccc', shirtColor2:'#ccbbbb', glasses:false, bald:true,  tie:null,     pantsColor:'#222' },
-  { name:'RedTie',    hairStyle:'curly', hairColor:'#111108', shirtColor:'#99aacc', shirtColor2:'#8899bb', glasses:true,  bald:false, tie:'#cc2222',pantsColor:'#333' },
-  { name:'DarkSuit',  hairStyle:'short', hairColor:'#0a0a0a', shirtColor:'#334466', shirtColor2:'#283858', glasses:false, bald:false, tie:'#333355',pantsColor:'#222' },
-  { name:'NeatGuy',   hairStyle:'neat',  hairColor:'#3a2a1a', shirtColor:'#ccddee', shirtColor2:'#bbccdd', glasses:true,  bald:false, tie:'#882244',pantsColor:'#333' },
-  { name:'GreyTee',   hairStyle:'thin',  hairColor:'#666666', shirtColor:'#778888', shirtColor2:'#667777', glasses:false, bald:false, tie:null,     pantsColor:'#444' },
-  { name:'BlueGuy',   hairStyle:'short', hairColor:'#1a1008', shirtColor:'#3366aa', shirtColor2:'#2255aa', glasses:false, bald:false, tie:null,     pantsColor:'#333' },
+  { name:'Marioli-no', hairStyle:'wavy',  hairColor:'#1a1008', shirtColor:'#2b4499', shirtColor2:'#1e3377', glasses:false, bald:false, tie:null,     pantsColor:'#444' },
+  { name:'Nik',        hairStyle:'short', hairColor:'#1a1008', shirtColor:'#8b2222', shirtColor2:'#6b1818', glasses:true,  bald:false, tie:null,     pantsColor:'#333' },
+  { name:'Mis Ivica',  hairStyle:'short', hairColor:'#5a4a2a', shirtColor:'#ccc0a0', shirtColor2:'#b0a888', glasses:false, bald:false, tie:null,     pantsColor:'#444' },
+  { name:'Matisha',    hairStyle:'short', hairColor:'#888888', shirtColor:'#7799bb', shirtColor2:'#6688aa', glasses:false, bald:false, tie:null,     pantsColor:'#333' },
+  { name:'Johnnych',   hairStyle:'none',  hairColor:null,      shirtColor:'#ddcccc', shirtColor2:'#ccbbbb', glasses:false, bald:true,  tie:null,     pantsColor:'#222' },
+  { name:'Pupke',      hairStyle:'curly', hairColor:'#111108', shirtColor:'#99aacc', shirtColor2:'#8899bb', glasses:true,  bald:false, tie:'#cc2222',pantsColor:'#333' },
 ];
 
 const SKIN_COLOR = '#e8b89a';
@@ -813,6 +809,16 @@ function drawLemming(lem) {
     ctx.fillRect(x + 7, y - 14, 2, 3);
   }
 
+  // Floating name above character
+  const nameY = lem.state === LEM.FLOATING ? y - 42 : y - 28;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.font = 'bold 8px Arial';
+  ctx.textAlign = 'center';
+  const nameW = ctx.measureText(type.name).width;
+  ctx.fillRect(x - nameW/2 - 2, nameY - 7, nameW + 4, 10);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(type.name, x, nameY);
+
   ctx.restore();
 }
 
@@ -1104,8 +1110,11 @@ const game = {
 
     // Walking characters
     const baseY = 230;
-    for (let i = 0; i < CHARACTER_TYPES.length; i++) {
-      const cx = 120 + i * 80;
+    const charCount = CHARACTER_TYPES.length;
+    const charSpacing = 120;
+    const charStartX = GAME_WIDTH/2 - (charCount - 1) * charSpacing / 2;
+    for (let i = 0; i < charCount; i++) {
+      const cx = charStartX + i * charSpacing;
       const walkFrame = Math.floor((this.menuAnimFrame + i * 7) / 10) % 4;
       const bobY = Math.sin((this.menuAnimFrame + i * 13) * 0.08) * 2;
       const tempLem = {
@@ -1367,7 +1376,7 @@ const game = {
     ctx.fillText('All friends saved! Every level complete!', GAME_WIDTH/2, TOTAL_HEIGHT/2 - 40);
 
     for (let i = 0; i < CHARACTER_TYPES.length; i++) {
-      const cx = 120 + i * 80;
+      const cx = GAME_WIDTH/2 - (CHARACTER_TYPES.length - 1) * 120 / 2 + i * 120;
       const bobY = Math.sin((this.frameCount + i * 17) * 0.1) * 4;
       const tempLem = {
         x: cx, y: TOTAL_HEIGHT/2 + 50 + bobY, dx: 1,
