@@ -40,6 +40,176 @@ window.addEventListener('resize', resizeCanvas);
 window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
 resizeCanvas();
 
+// ==================== MUSIC ENGINE (Web Audio API) ====================
+const music = {
+  ctx: null,
+  muted: false,
+  started: false,
+  masterGain: null,
+  playing: null, // 'menu' or 'game'
+  tempo: 140, // BPM
+  step: 0,
+  nextNoteTime: 0,
+  timerID: null,
+
+  // Note frequencies
+  NOTE: {
+    C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, B3:246.94,
+    C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, B4:493.88,
+    C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00,
+    REST: 0
+  },
+
+  // Catchy main melody (Lemmings-inspired upbeat tune)
+  melodyGame: null,
+  bassGame: null,
+  melodyMenu: null,
+  bassMenu: null,
+
+  init() {
+    const N = this.NOTE;
+    // Main game melody — upbeat and bouncy
+    this.melodyGame = [
+      N.E4, N.G4, N.A4, N.G4,  N.E4, N.D4, N.C4, N.D4,
+      N.E4, N.G4, N.A4, N.B4,  N.C5, N.B4, N.A4, N.G4,
+      N.A4, N.G4, N.E4, N.D4,  N.C4, N.D4, N.E4, N.G4,
+      N.A4, N.A4, N.G4, N.E4,  N.D4, N.E4, N.G4, N.REST,
+
+      N.C5, N.B4, N.A4, N.G4,  N.A4, N.G4, N.E4, N.D4,
+      N.E4, N.G4, N.A4, N.G4,  N.E4, N.D4, N.C4, N.REST,
+      N.D4, N.E4, N.G4, N.A4,  N.B4, N.A4, N.G4, N.E4,
+      N.A4, N.G4, N.E4, N.D4,  N.C4, N.D4, N.E4, N.REST,
+    ];
+    // Bass line
+    this.bassGame = [
+      N.C3, N.REST, N.G3, N.REST, N.C3, N.REST, N.G3, N.REST,
+      N.C3, N.REST, N.G3, N.REST, N.A3, N.REST, N.E3, N.REST,
+      N.F3, N.REST, N.C3, N.REST, N.G3, N.REST, N.C3, N.REST,
+      N.F3, N.REST, N.G3, N.REST, N.C3, N.REST, N.G3, N.REST,
+
+      N.A3, N.REST, N.E3, N.REST, N.F3, N.REST, N.C3, N.REST,
+      N.C3, N.REST, N.G3, N.REST, N.C3, N.REST, N.G3, N.REST,
+      N.D3, N.REST, N.G3, N.REST, N.E3, N.REST, N.A3, N.REST,
+      N.F3, N.REST, N.G3, N.REST, N.C3, N.REST, N.G3, N.REST,
+    ];
+    // Menu melody — dreamy and slower feel
+    this.melodyMenu = [
+      N.E4, N.REST, N.G4, N.REST, N.A4, N.REST, N.G4, N.REST,
+      N.C5, N.REST, N.B4, N.REST, N.A4, N.REST, N.G4, N.REST,
+      N.E4, N.REST, N.D4, N.REST, N.C4, N.REST, N.D4, N.REST,
+      N.E4, N.REST, N.REST, N.REST, N.REST, N.REST, N.REST, N.REST,
+    ];
+    this.bassMenu = [
+      N.C3, N.REST, N.REST, N.REST, N.G3, N.REST, N.REST, N.REST,
+      N.A3, N.REST, N.REST, N.REST, N.E3, N.REST, N.REST, N.REST,
+      N.F3, N.REST, N.REST, N.REST, N.G3, N.REST, N.REST, N.REST,
+      N.C3, N.REST, N.REST, N.REST, N.REST, N.REST, N.REST, N.REST,
+    ];
+  },
+
+  start() {
+    if (this.started) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.gain.value = this.muted ? 0 : 0.35;
+    this.masterGain.connect(this.ctx.destination);
+    this.started = true;
+    this.init();
+  },
+
+  playTrack(track) {
+    if (!this.started) this.start();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.playing === track) return;
+    this.playing = track;
+    this.step = 0;
+    this.nextNoteTime = this.ctx.currentTime;
+    if (this.timerID) clearInterval(this.timerID);
+    this.timerID = setInterval(() => this.scheduler(), 25);
+  },
+
+  stop() {
+    if (this.timerID) {
+      clearInterval(this.timerID);
+      this.timerID = null;
+    }
+    this.playing = null;
+  },
+
+  toggleMute() {
+    this.muted = !this.muted;
+    if (this.masterGain) {
+      this.masterGain.gain.value = this.muted ? 0 : 0.35;
+    }
+  },
+
+  scheduler() {
+    if (!this.playing || !this.ctx) return;
+    const mel = this.playing === 'menu' ? this.melodyMenu : this.melodyGame;
+    const bas = this.playing === 'menu' ? this.bassMenu : this.bassGame;
+    const bpm = this.playing === 'menu' ? 100 : this.tempo;
+    const secPerBeat = 60.0 / bpm / 2; // 8th notes
+
+    while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
+      const melIdx = this.step % mel.length;
+      const basIdx = this.step % bas.length;
+
+      if (mel[melIdx] > 0) {
+        this.playNote(mel[melIdx], this.nextNoteTime, secPerBeat * 0.8, 'square', 0.12);
+      }
+      if (bas[basIdx] > 0) {
+        this.playNote(bas[basIdx], this.nextNoteTime, secPerBeat * 0.6, 'triangle', 0.18);
+      }
+      // Light percussion on every 4th step
+      if (this.step % 4 === 0) {
+        this.playNoise(this.nextNoteTime, 0.05, 0.06);
+      }
+      if (this.step % 4 === 2) {
+        this.playNoise(this.nextNoteTime, 0.03, 0.03);
+      }
+
+      this.step++;
+      this.nextNoteTime += secPerBeat;
+    }
+  },
+
+  playNote(freq, time, duration, type, volume) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(time);
+    osc.stop(time + duration + 0.01);
+  },
+
+  playNoise(time, duration, volume) {
+    const bufferSize = this.ctx.sampleRate * duration;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(volume, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+    // Highpass for hi-hat sound
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 8000;
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    noise.start(time);
+    noise.stop(time + duration + 0.01);
+  }
+};
+
 // Offscreen terrain canvas
 const terrainCanvas = document.createElement('canvas');
 const terrainCtx = terrainCanvas.getContext('2d');
@@ -902,6 +1072,7 @@ function getActionButtons() {
     { id: 'fast',   label: 'SPEED+', x: baseX,             y: baseY + bh + gap, w: bw, h: bh },
     { id: 'slow',   label: 'SPEED-', x: baseX + bw + gap,  y: baseY + bh + gap, w: bw, h: bh },
     { id: 'nuke',   label: 'NUKE!',  x: baseX + (bw+gap)*2,y: baseY + bh + gap, w: bw, h: bh },
+    { id: 'mute',   label: music.muted ? 'SOUND ON' : 'MUTE', x: baseX + (bw+gap)*3, y: baseY, w: bw, h: bh*2 + gap },
   ];
 }
 
@@ -967,9 +1138,14 @@ const game = {
   update() {
     if (this.state === STATES.MENU) {
       this.menuAnimFrame++;
+      if (music.started && music.playing !== 'menu') music.playTrack('menu');
       return;
     }
-    if (this.state !== STATES.PLAYING) return;
+    if (this.state !== STATES.PLAYING) {
+      if (music.started && music.playing !== null && this.state !== STATES.PAUSED) music.stop();
+      return;
+    }
+    if (music.started && music.playing !== 'game') music.playTrack('game');
 
     this.frameCount++;
 
@@ -1005,7 +1181,32 @@ const game = {
     if (this.spawned >= this.totalLemmings) {
       const allDone = this.lemmings.every(l => !l.alive || l.saved);
       if (allDone) {
-        this.state = this.saved >= this.requiredSaves ? STATES.LEVEL_COMPLETE : STATES.LEVEL_FAIL;
+        if (this.saved >= this.requiredSaves) {
+          this.state = STATES.LEVEL_COMPLETE;
+          music.stop();
+          if (music.started && !music.muted) {
+            // Victory jingle
+            const N = music.NOTE;
+            const t = music.ctx.currentTime;
+            music.playNote(N.C5, t, 0.15, 'square', 0.15);
+            music.playNote(N.E5, t+0.15, 0.15, 'square', 0.15);
+            music.playNote(N.G5, t+0.3, 0.15, 'square', 0.15);
+            music.playNote(N.C5, t+0.45, 0.4, 'square', 0.2);
+            music.playNote(N.E5, t+0.45, 0.4, 'square', 0.15);
+            music.playNote(N.G5, t+0.45, 0.4, 'square', 0.12);
+          }
+        } else {
+          this.state = STATES.LEVEL_FAIL;
+          music.stop();
+          if (music.started && !music.muted) {
+            // Sad trombone
+            const N = music.NOTE;
+            const t = music.ctx.currentTime;
+            music.playNote(N.B4, t, 0.3, 'triangle', 0.15);
+            music.playNote(N.A4, t+0.3, 0.3, 'triangle', 0.13);
+            music.playNote(N.G3, t+0.6, 0.5, 'triangle', 0.12);
+          }
+        }
       }
     }
 
@@ -1234,6 +1435,11 @@ const game = {
       let textColor = '#8899aa';
       if (ab.id === 'nuke') { bgColor = hover ? '#442222' : '#2a1818'; textColor = '#cc6644'; }
       if (ab.id === 'pause' && this.state === STATES.PAUSED) { bgColor = '#334466'; textColor = '#88ccff'; }
+      if (ab.id === 'mute') {
+        ab.label = music.muted ? '\u266B ON' : '\u266B OFF';
+        bgColor = music.muted ? (hover ? '#442233' : '#2a1828') : (hover ? '#223344' : '#182230');
+        textColor = music.muted ? '#cc6688' : '#66aacc';
+      }
 
       ctx.fillStyle = bgColor;
       ctx.fillRect(ab.x, ab.y, ab.w, ab.h);
@@ -1432,11 +1638,13 @@ const game = {
         const lx = GAME_WIDTH/2 - (cols * (btnW + 10) - 10) / 2 + col * (btnW + 10);
         const ly = 390 + row * (btnH + 10);
         if (mx >= lx && mx < lx + btnW && my >= ly && my < ly + btnH) {
+          if (!music.started) music.start();
           this.startLevel(i);
           return;
         }
       }
       // Tap anywhere else = start level 0
+      if (!music.started) music.start();
       this.startLevel(0);
       return;
     }
@@ -1559,6 +1767,10 @@ const game = {
               }
             }
             return;
+          case 'mute':
+            if (!music.started) music.start();
+            music.toggleMute();
+            return;
         }
       }
     }
@@ -1656,6 +1868,7 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (key === 'Escape') game.state = STATES.MENU;
+  if (key === 'm' || key === 'M') { if (!music.started) music.start(); music.toggleMute(); }
 
   const num = parseInt(key);
   if (num >= 1 && num <= 8) game.selectedAbility = num - 1;
