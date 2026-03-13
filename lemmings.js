@@ -17,6 +17,29 @@ canvas.height = TOTAL_HEIGHT;
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
   (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
 
+// Resize canvas to fit visible viewport (handles Safari toolbar)
+function resizeCanvas() {
+  const container = document.getElementById('game-container');
+  const cw = container.clientWidth;
+  const ch = container.clientHeight;
+  const aspectRatio = GAME_WIDTH / TOTAL_HEIGHT;
+  const containerRatio = cw / ch;
+
+  if (containerRatio > aspectRatio) {
+    // Height limited
+    canvas.style.height = ch + 'px';
+    canvas.style.width = Math.round(ch * aspectRatio) + 'px';
+  } else {
+    // Width limited
+    canvas.style.width = cw + 'px';
+    canvas.style.height = Math.round(cw / aspectRatio) + 'px';
+  }
+}
+
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+resizeCanvas();
+
 // Offscreen terrain canvas
 const terrainCanvas = document.createElement('canvas');
 const terrainCtx = terrainCanvas.getContext('2d');
