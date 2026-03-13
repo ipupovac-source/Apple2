@@ -153,14 +153,14 @@
   .hero h2 {
     font-family: 'Playfair Display', serif;
     font-weight: 900;
-    font-size: 42px;
+    font-size: 36px;
     line-height: 1.15;
     margin-bottom: 12px;
     color: #111;
   }
 
   .hero-lead {
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1.5;
     color: #333;
     margin-bottom: 14px;
@@ -168,9 +168,6 @@
   }
 
   .hero-body {
-    columns: 2;
-    column-gap: 30px;
-    column-rule: 1px solid #e0e0e0;
     font-size: 16px;
     line-height: 1.75;
     color: #2a2a2a;
@@ -178,250 +175,129 @@
   }
 
   .hero-body p {
+    margin-bottom: 16px;
+  }
+
+  .hero-body .subtitle {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: #111;
+    margin-top: 28px;
     margin-bottom: 12px;
+    text-align: left;
   }
 
   .hero-image {
     width: 100%;
-    height: 320px;
-    background: linear-gradient(135deg, #2980b9 0%, #1a5276 60%, #0e2f44 100%);
     border-radius: 3px;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+    margin-bottom: 6px;
     overflow: hidden;
   }
 
-  .hero-image::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 60%),
-      radial-gradient(ellipse at 70% 80%, rgba(0,0,0,0.2) 0%, transparent 50%);
-  }
-
-  .hero-image-text {
-    font-family: 'Inter', sans-serif;
-    color: rgba(255,255,255,0.6);
-    font-size: 13px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    z-index: 1;
+  .hero-image img {
+    width: 100%;
+    height: 380px;
+    object-fit: cover;
+    display: block;
   }
 
   .hero-caption {
     font-family: 'Inter', sans-serif;
     font-size: 11px;
     color: #999;
-    margin-top: -10px;
-    margin-bottom: 14px;
-  }
-
-  /* === GRID ARTICLES === */
-  .articles-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 24px;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 24px;
-    margin-bottom: 24px;
-  }
-
-  .article-card {
-    border-right: 1px solid #e8e8e8;
-    padding-right: 24px;
-  }
-
-  .article-card:last-child {
-    border-right: none;
-    padding-right: 0;
-  }
-
-  .article-card-image {
-    width: 100%;
-    height: 140px;
-    border-radius: 3px;
-    margin-bottom: 12px;
-  }
-
-  .card-img-1 {
-    background: linear-gradient(145deg, #e67e22, #d35400);
-  }
-
-  .card-img-2 {
-    background: linear-gradient(145deg, #27ae60, #1e8449);
-  }
-
-  .card-img-3 {
-    background: linear-gradient(145deg, #8e44ad, #6c3483);
-  }
-
-  .article-card .kicker {
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #c41e1e;
-    margin-bottom: 6px;
-  }
-
-  .article-card h3 {
-    font-family: 'Playfair Display', serif;
-    font-weight: 700;
-    font-size: 20px;
-    line-height: 1.3;
-    margin-bottom: 8px;
-    color: #1a1a1a;
-  }
-
-  .article-card p {
-    font-size: 14px;
-    line-height: 1.6;
-    color: #555;
-  }
-
-  .article-card .byline {
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    color: #999;
-    margin-top: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  /* === OPINION SECTION === */
-  .opinion-section {
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 24px;
-    margin-bottom: 24px;
-  }
-
-  .section-header {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: #c41e1e;
-    border-bottom: 3px solid #c41e1e;
-    padding-bottom: 6px;
     margin-bottom: 18px;
-    display: inline-block;
   }
 
-  .opinion-grid {
+  /* === IMAGE GALLERY === */
+  .photo-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    gap: 16px;
+    margin: 24px 0;
   }
 
-  .opinion-card {
-    padding: 20px;
-    background: #faf8f2;
-    border-left: 4px solid #c41e1e;
+  .photo-grid figure {
+    margin: 0;
   }
 
-  .opinion-card h3 {
-    font-family: 'Playfair Display', serif;
-    font-weight: 700;
-    font-size: 22px;
-    line-height: 1.3;
-    margin-bottom: 10px;
-    font-style: italic;
+  .photo-grid img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: block;
   }
 
-  .opinion-card p {
-    font-size: 14px;
-    line-height: 1.65;
-    color: #444;
-  }
-
-  .opinion-card .author {
+  .photo-grid figcaption {
     font-family: 'Inter', sans-serif;
     font-size: 11px;
-    font-weight: 600;
-    color: #c41e1e;
-    margin-top: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: #888;
+    margin-top: 4px;
+    line-height: 1.4;
   }
 
-  /* === SIDEBAR-STYLE BOTTOM === */
-  .bottom-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 30px;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 24px;
-    margin-bottom: 24px;
+  .photo-single {
+    margin: 24px 0;
   }
 
-  .feature-article h3 {
-    font-family: 'Playfair Display', serif;
-    font-weight: 700;
-    font-size: 28px;
-    line-height: 1.25;
-    margin-bottom: 10px;
+  .photo-single img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: block;
   }
 
-  .feature-article .kicker {
+  .photo-single figcaption {
     font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #c41e1e;
-    margin-bottom: 6px;
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
   }
 
-  .feature-article p {
-    font-size: 15px;
-    line-height: 1.7;
-    color: #333;
-    text-align: justify;
-  }
-
-  .sidebar-list h4 {
+  /* === PULL QUOTE === */
+  .pull-quote {
     font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+    font-size: 24px;
+    font-style: italic;
+    font-weight: 700;
     color: #c41e1e;
-    border-bottom: 2px solid #c41e1e;
-    padding-bottom: 6px;
-    margin-bottom: 14px;
+    border-top: 3px solid #c41e1e;
+    border-bottom: 3px solid #c41e1e;
+    padding: 18px 0;
+    margin: 28px 0;
+    text-align: center;
+    line-height: 1.4;
   }
 
-  .sidebar-item {
-    padding: 10px 0;
+  /* === BYLINE === */
+  .byline-block {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
     border-bottom: 1px solid #eee;
   }
 
-  .sidebar-item span.num {
-    font-family: 'Playfair Display', serif;
-    font-weight: 900;
-    font-size: 24px;
+  .byline-block .author-name {
+    font-weight: 600;
     color: #c41e1e;
-    margin-right: 10px;
-    vertical-align: top;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  .sidebar-item a {
-    font-family: 'Playfair Display', serif;
-    font-size: 15px;
-    font-weight: 700;
-    color: #1a1a1a;
-    text-decoration: none;
-    line-height: 1.3;
-  }
-
-  .sidebar-item a:hover {
-    color: #c41e1e;
+  /* === DISCLAIMER === */
+  .disclaimer {
+    background: #faf8f2;
+    border-left: 4px solid #c41e1e;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #888;
+    line-height: 1.5;
   }
 
   /* === FOOTER === */
@@ -440,31 +316,14 @@
     text-decoration: none;
   }
 
-  /* === QUOTE BLOCK === */
-  .pull-quote {
-    font-family: 'Playfair Display', serif;
-    font-size: 26px;
-    font-style: italic;
-    font-weight: 700;
-    color: #c41e1e;
-    border-top: 3px solid #c41e1e;
-    border-bottom: 3px solid #c41e1e;
-    padding: 18px 0;
-    margin: 20px 0;
-    text-align: center;
-    line-height: 1.4;
-  }
-
   /* === RESPONSIVE === */
   @media (max-width: 768px) {
     .masthead h1 { font-size: 36px; }
-    .hero h2 { font-size: 28px; }
-    .hero-body { columns: 1; }
-    .articles-grid { grid-template-columns: 1fr; }
-    .article-card { border-right: none; padding-right: 0; border-bottom: 1px solid #eee; padding-bottom: 16px; }
-    .opinion-grid { grid-template-columns: 1fr; }
-    .bottom-grid { grid-template-columns: 1fr; }
+    .hero h2 { font-size: 26px; }
+    .photo-grid { grid-template-columns: 1fr; }
     .nav-bar { flex-wrap: wrap; gap: 12px; }
+    .hero-image img { height: 240px; }
+    .photo-grid img { height: 200px; }
   }
 </style>
 </head>
@@ -476,7 +335,7 @@
   <header class="masthead">
     <div class="masthead-top">
       <span>Petak, 13. o&#382;ujka 2026.</span>
-      <span>Cijena: 1,50 &#8364;</span>
+      <span>Cijena: 1,50 &euro;</span>
       <span>Godina LXXXIII &bull; Broj 25.412</span>
     </div>
     <h1>Slobodna Dalmacija</h1>
@@ -487,7 +346,7 @@
   <nav class="nav-bar">
     <span class="active">Naslovnica</span>
     <span>Hrvatska</span>
-    <span>Split</span>
+    <span>Zadar</span>
     <span>Dalmacija</span>
     <span>Svijet</span>
     <span>Sport</span>
@@ -497,140 +356,123 @@
 
   <!-- BREAKING NEWS -->
   <div class="breaking">
-    <span class="breaking-label">Upravo</span>
-    <span class="breaking-text">Splitska riva proglašena najljepšom mediteranskom šetnicom &mdash; Turisti iz cijelog svijeta oduševljeni &mdash; Gradonačelnik najavio nova ulaganja u infrastrukturu</span>
+    <span class="breaking-label">Istraga</span>
+    <span class="breaking-text">Ninski zemljišni poslovi pod lupom &mdash; Povezanost politike i poduzetništva u zadarskoj županiji &mdash; Državno odvjetništvo čeka prijavu</span>
   </div>
 
   <!-- CONTENT -->
   <main class="content">
 
-    <!-- HERO -->
+    <!-- HERO ARTICLE -->
     <article class="hero">
-      <div class="hero-kicker">Ekskluzivno</div>
-      <h2>Dioklecijanova pala&#269;a dobiva novi sjaj: Po&#269;inje najve&#263;a obnova u posljednjih sto godina</h2>
+      <div class="hero-kicker">Ekskluzivno &mdash; Istraga</div>
+      <h2>Službeno &lsquo;prijateljstvo&rsquo; iza kojeg miriše na Nin: Piaca financirao Lungovu kampanju, a ovaj mu zauzvrat omogu&#263;io &lsquo;poslove stolje&#263;a&rsquo;?</h2>
+
+      <!-- HERO IMAGE: Zadar old town / Kalelarga -->
       <div class="hero-image">
-        <span class="hero-image-text">Foto: Dioklecijanova pala&#269;a</span>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Zadar_-_%C5%A0iroka_ulica_%28Kalelarga%29.JPG/1200px-Zadar_-_%C5%A0iroka_ulica_%28Kalelarga%29.JPG"
+             alt="Zadar &mdash; pogled na Kalelarga ulicu i krovove starog grada">
       </div>
-      <div class="hero-caption">Foto: Arhiva Slobodne Dalmacije / Pogled na Peristil u ve&#269;ernjim satima</div>
+      <div class="hero-caption">Foto: Wikimedia Commons / Zadar &mdash; Široka ulica (Kalelarga) i panorama starog grada</div>
+
+      <!-- BYLINE -->
+      <div class="byline-block">
+        Piše: <span class="author-name">(S)dojavljivač</span> &bull; Zadar, 13. ožujka 2026.
+      </div>
+
+      <!-- LEAD -->
       <p class="hero-lead">
-        Ministarstvo kulture odobrilo 45 milijuna eura za sveobuhvatnu restauraciju anti&#269;kog kompleksa. Radovi po&#269;inju u rujnu, a o&#269;ekuje se da &#263;e trajati pet godina.
+        ZADAR &ndash; Bilo je to prijateljstvo za pam&#263;enje, ono zbog kojeg se u zadarskim kafi&#263;ima i danas podiže obrva. Dok je trajala predizborna utrka za gradona&#269;elni&#269;ko mjesto, malo tko je obra&#263;ao pozornost na tihog, ali mo&#263;nog partnera iz sjene iza kandidata Duška Polovine Lunga.
       </p>
+
+      <!-- BODY -->
       <div class="hero-body">
         <p>
-          Split se priprema za po&#269;etak najambicioznijeg restauracijskog projekta u svojoj modernoj povijesti. Dioklecijanova pala&#269;a, rimski anti&#269;ki kompleks iz 4. stolje&#263;a koji je uvršten na UNESCO-ov popis svjetske baštine, pro&#263;i &#263;e kroz temeljitu obnovu koja &#263;e obuhvatiti sve &#269;etiri fasade, podzemne prostorije te Peristil.
+          Ime mu je Lvica Piaca, poduzetnik &#269;iji se poslovni put &#269;esto gubi u offshore labirintima, a izvire na najatraktivnijim lokalitetima zadarske županije. Njihovo je savezništvo, kako danas neslužbeno doznajemo, kulminiralo u starom gradu Ninu, gdje se, umjesto soli, sada &ldquo;proizvode&rdquo; milijunski poslovi.
         </p>
+
+        <!-- PHOTO GRID: Nin -->
+        <div class="photo-grid">
+          <figure>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Croatia%2C_Nin%2C_church.JPG/800px-Croatia%2C_Nin%2C_church.JPG"
+                 alt="Crkva svetog Križa u Ninu">
+            <figcaption>Crkva sv. Križa u Ninu &mdash; &ldquo;najmanja katedrala na svijetu&rdquo; iz 9. stolje&#263;a. Foto: Donar Reiskoffer / Wikimedia Commons (CC BY 3.0)</figcaption>
+          </figure>
+          <figure>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Sveti_Kri%C5%BE_%28Nin_-_Croazia%29.JPG/800px-Sveti_Kri%C5%BE_%28Nin_-_Croazia%29.JPG"
+                 alt="Sveti Križ &mdash; Nin, Hrvatska">
+            <figcaption>Sveti Križ &mdash; pogled na crkvicu i okolinu starog grada Nina. Foto: Wikimedia Commons (CC BY-SA 3.0)</figcaption>
+          </figure>
+        </div>
+
         <p>
-          &bdquo;Ovo je povijesni trenutak za Split i za cijelu Hrvatsku&ldquo;, izjavio je ministar kulture na danas održanoj konferenciji za medije u splitskoj gradskoj vije&#263;nici. &bdquo;Dioklecijanova pala&#269;a nije samo splitski dragulj &mdash; ona je dio svjetske kulturne baštine i zaslužuje da bude o&#269;uvana za budu&#263;e generacije.&ldquo;
+          Naša redakcija došla je u posjed informacija koje bacaju novo svjetlo na nagli uspon poslovnog carstva Lvice Piace. Klju&#269; se, &#269;ini se, krije u izbornoj godini kada je Duško Polovina Lungo odlu&#269;io zaposjesti fotelju u Gradskoj upravi. Njegova kampanja, iako formalno skromna, navodno je podbacila novcem upravo iz Piacina džepa.
         </p>
+
         <p>
-          Tim od dvadeset me&#273;unarodnih stru&#269;njaka za konzervaciju, uklju&#269;uju&#263;i specijaliste iz Italije, Gr&#269;ke i Velike Britanije, ve&#263; je zapo&#269;eo s preliminarnim analizama strukture. Posebna pozornost posvetit &#263;e se Peristilu, &#269;iji stupovi pokazuju znakove erozije nakon gotovo dva tisu&#263;lje&#263;a izloženosti elementima.
+          &ldquo;Nije bilo tajno da se druže, ali ono što se pri&#269;alo u strana&#269;kim hodnicima bilo je daleko ozbiljnije. Piaca mu nije dao samo novac za plakate, nego je platio i cijelu medijsku kampanju. Zauzvrat je tražio samo jedno &ndash; da mu se nakon izbora omogu&#263;i pristup zemljištima u Ninu&rdquo;, otkriva nam bivši visoki dužnosnik lokalnog HDZ-a, koji je želio ostati anoniman.
         </p>
+
         <p>
-          Projekt uklju&#269;uje i modernizaciju sustava odvodnje u podrumima Pala&#269;e, koji su posljednjih godina bili izloženi poplavama tijekom jakih kiša. Prema rije&#269;ima voditelja projekta, nova infrastruktura &#263;e osigurati dugoro&#269;nu zaštitu podzemnih prostora koji privla&#269;e više od milijun posjetitelja godišnje.
+          Iako Polovina Lungo na kraju nije odnio pobjedu, njegov je politi&#269;ki utjecaj, prema rije&#269;ima naših sugovornika, ostao dovoljno jak da progura odre&#273;ene odluke. I zaista, nedugo nakon izbora, tvrtka bliska Ivici Piaci po&#269;ela je intenzivno pregovarati o kupnji i dugogodišnjem zakupu nekoliko klju&#269;nih parcela u ninskoj laguni i na podru&#269;ju Prahulja. Rije&#269; je o zemljištu koje je godinama bilo &ldquo;nedodirljivo&rdquo; zbog konzervatorskih zahtjeva ili neriješenih imovinsko-pravnih odnosa.
         </p>
+
+        <!-- PULL QUOTE -->
+        <div class="pull-quote">
+          &ldquo;Te su se &#269;estice godinama nisu mogle maknuti s mrtve to&#269;ke. Onda se odjednom, nakon što je Polovina Lungo ušao u igru, stvorila pravna magla.&rdquo;
+        </div>
+
+        <p class="subtitle">Zemljište koje je &ldquo;moralo&rdquo; pri&#269;ekati Lunga</p>
+
+        <p>
+          Lokalni odvjetnik koji je pratio imovinske transakcije isti&#269;e kako je vrijeme svega nevjerojatno.
+          &ldquo;Te su se &#269;estice godinama nisu mogle maknuti s mrtve to&#269;ke. Onda se odjednom, nakon što je Polovina Lungo ušao u igru, stvorila pravna magla kroz koju je samo Piacina tvrtka mogla pro&#263;i. Sada tamo ni&#269;u &lsquo;butik&rsquo; hoteli i apartmanska naselja, a javnost nema pojma tko je pravi vlasnik&rdquo;, kaže odvjetnik.
+        </p>
+
+        <!-- PHOTO: Zadar St. Donatus / Roman Forum -->
+        <figure class="photo-single">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Church_of_St._Donatus_in_Zadar_%28by_Pudelek%29.JPG/1200px-Church_of_St._Donatus_in_Zadar_%28by_Pudelek%29.JPG"
+               alt="Crkva sv. Donata i Rimski forum u Zadru">
+          <figcaption>Zadar &mdash; Crkva sv. Donata i Rimski forum, srce starog grada u kojem se prepleću stolje&#263;a povijesti i suvremeni poslovni interesi. Foto: Pudelek / Wikimedia Commons (CC BY-SA 3.0)</figcaption>
+        </figure>
+
+        <p>
+          S druge strane, iako formalno nije ušao u gradsku upravu, Polovina Lungo navodno nije zakinut. Njegove vlastite tvrtke, specijalizirane za gra&#273;evinske radove i opremanje, redovito se pojavljuju kao podizvo&#273;a&#269;i na istim onim projektima koje Piaca pokre&#263;e upravo na bivšim spornim zemljištima.
+        </p>
+
+        <p>
+          &ldquo;To je klasi&#269;na shema: ti meni &lsquo;riješiš&rsquo; papire i politi&#269;ki pokri&#263;e, ja tebi dam posao za betoniranje. Novac se vrti u krug, a na kraju uvijek nedostaje jedino &ndash; poštenje prema gra&#273;anima&rdquo;, komentira jedan od oporbenih vije&#263;nika u Gradu Zadru.
+        </p>
+
+        <p>
+          Pokušali smo dobiti komentar od Duška Polovine Lunga, no on je za naš list kratko poru&#269;io kako se &ldquo;ne bavi anonimnim insinuacijama&rdquo; te da su njegovi poslovi uvijek bili transparentni. Lvica Piaca nije bio dostupan za izjavu.
+        </p>
+
+        <!-- PHOTO GRID: More Nin & Zadar -->
+        <div class="photo-grid">
+          <figure>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Sea_organ_Zadar_3.JPG/800px-Sea_organ_Zadar_3.JPG"
+                 alt="Morske orgulje u Zadru">
+            <figcaption>Zadarska riva i Morske orgulje &mdash; simbol modernog Zadra. Foto: Wikimedia Commons (CC BY-SA 3.0)</figcaption>
+          </figure>
+          <figure>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Nin_-_ruins_of_Roman_temple_2.JPG/800px-Nin_-_ruins_of_Roman_temple_2.JPG"
+                 alt="Ruševine rimskog hrama u Ninu">
+            <figcaption>Nin &mdash; ruševine rimskog hrama, svjedo&#269;anstvo anti&#269;ke prošlosti grada. Foto: Wikimedia Commons (CC BY-SA 3.0)</figcaption>
+          </figure>
+        </div>
+
+        <p>
+          Dok se &#269;eka reakcija Državnog odvjetništva i Povjerenstva za sukob interesa, u Ninu ostaje gorak okus. Onaj isti koji ima sol kada pomiješate more, novac i politiku. A upravo se sol, kažu stari Nin&#273;ani, nekada ovdje cijenila više od svega. Danas su je, &#269;ini se, zamijenili drugi, puno prljaviji poslovi.
+        </p>
+
+      </div>
+
+      <!-- DISCLAIMER -->
+      <div class="disclaimer">
+        <strong>Napomena:</strong> Ovo je fiktivna demo stranica. Sav sadržaj, uklju&#269;uju&#263;i imena osoba i doga&#273;aje, u potpunosti je izmišljen u demonstracijske svrhe. Fotografije gradova Zadra i Nina preuzete su s Wikimedia Commons pod Creative Commons licencom.
       </div>
     </article>
-
-    <!-- PULL QUOTE -->
-    <div class="pull-quote">
-      &bdquo;Split bez Pala&#269;e nije Split. Ova obnova je naš dug prema povijesti.&ldquo;
-    </div>
-
-    <!-- THREE COLUMNS -->
-    <section class="articles-grid">
-
-      <article class="article-card">
-        <div class="article-card-image card-img-1"></div>
-        <div class="kicker">Sport</div>
-        <h3>Hajduk na pragu Lige prvaka: Bijeli razbili Dinamo na Poljudu</h3>
-        <p>
-          Utakmica desetlje&#263;a na prepunom Poljudu završila je pobjedom Hajduka 3:0 pred 33 tisu&#263;e navija&#269;a. Torcida u ekstazi &mdash; Split nije spavao do zore.
-        </p>
-        <div class="byline">Ante Milo&scaron;evi&#263; &bull; 13. o&#382;ujka 2026.</div>
-      </article>
-
-      <article class="article-card">
-        <div class="article-card-image card-img-2"></div>
-        <div class="kicker">Dalmacija</div>
-        <h3>Maslinovo ulje iz Šolte osvojilo zlato na svjetskom natjecanju u Tokiju</h3>
-        <p>
-          OPG Kaštela iz mjesta Grohote odnio je presti&#382;nu nagradu, potvrdiv&scaron;i Dalmaciju kao jednu od najkvalitetnijih uljnih regija na svijetu.
-        </p>
-        <div class="byline">Ivana Petri&#263; &bull; 13. o&#382;ujka 2026.</div>
-      </article>
-
-      <article class="article-card">
-        <div class="article-card-image card-img-3"></div>
-        <div class="kicker">Kultura</div>
-        <h3>Splitsko ljeto najavljuje Pavarottijevu hologramsku izvedbu na Peristilu</h3>
-        <p>
-          Organizatori festivala najavili su revolucionarni spektakl koji &#263;e spojiti anti&#269;ku arhitekturu s najmodernijom hologramskom tehnologijom.
-        </p>
-        <div class="byline">Marina Vrdoljak &bull; 13. o&#382;ujka 2026.</div>
-      </article>
-
-    </section>
-
-    <!-- OPINION -->
-    <section class="opinion-section">
-      <div class="section-header">Kolumne &amp; Komentari</div>
-      <div class="opinion-grid">
-        <article class="opinion-card">
-          <h3>&bdquo;Turizam ne smije progutati grad &mdash; Split mora ostati živ i zimi&ldquo;</h3>
-          <p>
-            Svake godine ponavljamo istu pri&#269;u. Ljeti se Split guši od turista, a zimi zjape prazne ulice. Vrijeme je da se ozbiljno pozabavimo cjelogodišnjim razvojem grada i prestanemo se ponašati kao da je sezona jedino što nas drži.
-          </p>
-          <div class="author">Piše: dr. sc. Tonka Maroevi&#263;</div>
-        </article>
-        <article class="opinion-card">
-          <h3>&bdquo;Dalmacija zaslužuje brzu prugu &mdash; ne obe&#263;anja, nego šine&ldquo;</h3>
-          <p>
-            Dok se ostatak Europe povezuje brzim vlakovima, mi se i dalje vozimo prugom iz doba Austro-Ugarske. &#268;injenica da vlak od Zagreba do Splita putuje sedam sati je sramota za zemlju &#269;lanicu Europske unije.
-          </p>
-          <div class="author">Piše: prof. dr. sc. Joško Beki&#263;</div>
-        </article>
-      </div>
-    </section>
-
-    <!-- BOTTOM FEATURE + SIDEBAR -->
-    <section class="bottom-grid">
-
-      <article class="feature-article">
-        <div class="kicker">Reportaža</div>
-        <h3>Život na otocima: Kako mladi na Visu grade budu&#263;nost daleko od grada</h3>
-        <p>
-          Dok ve&#263;ina mladih bježi s otoka prema kopnu, nova generacija poduzetnika pronašla je na&#269;in da od života na Visu napravi ne&scaron;to posebno. Od craft pivovara do eko-turizma, od digitalnog nomadstva do obnove starih kamenih ku&#263;a &mdash; pri&#269;a o Visu je pri&#269;a o tvrdoglavom optimizmu.
-        </p>
-        <p>
-          &bdquo;Ljudi misle da na otoku nema prilike&ldquo;, govori nam 28-godišnji Mate Hure, koji je prije tri godine ostavio posao u Zagrebu i vratio se na otok. &bdquo;Ali upravo u tome je &#269;ar &mdash; priliku ne &#269;ekaš, nego je sam stvoriš.&ldquo;
-        </p>
-      </article>
-
-      <aside class="sidebar-list">
-        <h4>Najčitanije</h4>
-        <div class="sidebar-item">
-          <span class="num">1</span>
-          <a href="#">Hajduk slavi &mdash; Split u deliriju nakon pobjede</a>
-        </div>
-        <div class="sidebar-item">
-          <span class="num">2</span>
-          <a href="#">Obnova Pala&#269;e: Svi detalji mega-projekta</a>
-        </div>
-        <div class="sidebar-item">
-          <span class="num">3</span>
-          <a href="#">Nevrijeme zahvatilo obalu &mdash; štete u Makarskoj</a>
-        </div>
-        <div class="sidebar-item">
-          <span class="num">4</span>
-          <a href="#">Šoltansko ulje osvojilo svijet</a>
-        </div>
-        <div class="sidebar-item">
-          <span class="num">5</span>
-          <a href="#">Hvar: Brit kupuje cijelo selo za luksuzni resort</a>
-        </div>
-      </aside>
-
-    </section>
 
   </main>
 
@@ -639,6 +481,9 @@
     <p>
       &copy; 2026 Slobodna Dalmacija &bull; Ovo je fiktivna demo stranica &mdash; sav sadržaj je izmišljen u demonstracijske svrhe &bull;
       <a href="https://www.slobodnadalmacija.hr" target="_blank">slobodnadalmacija.hr</a>
+    </p>
+    <p style="margin-top: 8px; font-size: 10px; color: #bbb;">
+      Fotografije: Wikimedia Commons &mdash; Donar Reiskoffer (CC BY 3.0), Pudelek (CC BY-SA 3.0) i drugi autori pod Creative Commons licencama.
     </p>
   </footer>
 
