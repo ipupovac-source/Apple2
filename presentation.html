@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Weekly Report – 17 March 2026</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+  .deck { width: 100%; max-width: 900px; background: #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.4); }
+  .header { background: linear-gradient(135deg, #1d4ed8, #7c3aed); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .header .brand { color: #e2e8f0; font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+  .header .counter { color: #cbd5e1; font-size: 12px; }
+  .content { padding: 28px 32px; min-height: 420px; }
+  .nav { padding: 12px 24px; border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+  .nav button { border: none; border-radius: 8px; padding: 8px 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .nav button:not(:disabled):hover { opacity: .85; }
+  .nav button:disabled { background: #334155; color: #64748b; cursor: default; }
+  .nav button:not(:disabled) { background: #1d4ed8; color: #fff; }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 4px; background: #475569; cursor: pointer; transition: background .15s; }
+  .dot.active { background: #7c3aed; }
+
+  /* Cover */
+  .cover { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 380px; text-align: center; }
+  .cover .tag { font-size: 14px; color: #94a3b8; letter-spacing: 2px; margin-bottom: 12px; }
+  .cover h1 { color: #f1f5f9; font-size: 36px; font-weight: 700; }
+  .cover .sub { color: #7c3aed; font-size: 20px; margin-top: 8px; }
+  .cover .meta { color: #64748b; font-size: 14px; margin-top: 24px; }
+
+  /* Section titles */
+  h2 { color: #f1f5f9; font-size: 22px; margin-bottom: 16px; }
+
+  /* Overview grid */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .card { background: #0f172a; border-radius: 8px; padding: 10px 14px; }
+  .card .top { display: flex; justify-content: space-between; align-items: center; }
+  .card .name { color: #e2e8f0; font-weight: 600; font-size: 13px; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .card .loc { color: #94a3b8; font-size: 11px; margin-top: 3px; }
+  .card .note { color: #64748b; font-size: 11px; margin-top: 2px; }
+
+  /* Issues */
+  .issue { background: #0f172a; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+  .issue .row { display: flex; align-items: center; gap: 10px; }
+  .issue .sev { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+  .issue .ship { color: #e2e8f0; font-weight: 600; font-size: 13px; }
+  .issue p { color: #94a3b8; font-size: 12px; margin-top: 6px; }
+
+  /* List items (PSC, Crew) */
+  .list-item { background: #0f172a; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; }
+  .list-item .ship { color: #7c3aed; font-weight: 600; font-size: 13px; }
+  .list-item p { color: #94a3b8; font-size: 12px; margin-top: 4px; }
+
+  /* Newbuild table */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { color: #94a3b8; font-weight: 600; padding: 8px 10px; text-align: left; border-bottom: 1px solid #334155; }
+  td { color: #94a3b8; padding: 10px; }
+  td.vessel { color: #e2e8f0; font-weight: 600; }
+  .highlight-row { background: rgba(124,58,237,0.1); }
+  .this-week { margin-left: 8px; background: #7c3aed; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 8px; }
+  .nb-note { color: #fbbf24; font-size: 12px; margin-top: 16px; padding: 10px 14px; background: rgba(251,191,36,0.1); border-radius: 8px; }
+
+  @media (max-width: 640px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .cover h1 { font-size: 26px; }
+    .content { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+  <div class="header">
+    <span class="brand">ATLANTIC PEARL</span>
+    <span class="counter" id="counter"></span>
+  </div>
+  <div class="content" id="slide"></div>
+  <div class="nav">
+    <button id="prevBtn" onclick="go(-1)">&larr; Previous</button>
+    <div class="dots" id="dots"></div>
+    <button id="nextBtn" onclick="go(1)">Next &rarr;</button>
+  </div>
+</div>
+
+<script>
+const slides = [
+  {
+    title: "Fleet Weekly Report",
+    subtitle: "17 March 2026",
+    type: "cover"
+  },
+  {
+    title: "Fleet Overview",
+    type: "overview",
+    data: [
+      { name: "AP Astarea", loc: "Jubail (anchored)", status: "warn", note: "Waiting berth, delayed by wind" },
+      { name: "AP Argosy", loc: "Taboneo (loading)", status: "ok", note: "ETS 24/03, then Mariveles" },
+      { name: "AP Dubrava", loc: "Rijeka, Viktor Lenac", status: "warn", note: "ETS 18/03, then Plo\u010de" },
+      { name: "AP Dubrovnik", loc: "Porto Bolivar (waiting)", status: "ok", note: "ETB 19/03, then Rotterdam" },
+      { name: "AP Jadran", loc: "En route Singapore", status: "ok", note: "ETA 19/03, then Tanjung Bin" },
+      { name: "AP Kupari", loc: "En route Rotterdam", status: "ok", note: "ETA 22/03, Alumina" },
+      { name: "AP Lapad", loc: "En route Singapore", status: "warn", note: "ETA SG 19/03, then Kendawangan" },
+      { name: "AP Revelin", loc: "En route Jingtang", status: "warn", note: "ETA 02/04, then DD Chengxi" },
+      { name: "AP Slano", loc: "Tema (discharging)", status: "ok", note: "ETS 18/03, then Abidjan" },
+      { name: "AP Zaton", loc: "Bintulu (loading)", status: "warn", note: "ETD 21/03, then Singapore" },
+      { name: "Miho Pracat", loc: "En route Pasir Gudang", status: "warn", note: "Bunker, then Singapore" },
+      { name: "Zagreb", loc: "En route Galle OPL", status: "warn", note: "ETA 23/03, then Ennore" }
+    ]
+  },
+  {
+    title: "Key Technical Issues",
+    type: "issues",
+    items: [
+      { ship: "AP Astarea", issue: "M.E. cylinder no.6 \u2013 liner replacement needed (broken piston rod rings)", sev: "high" },
+      { ship: "AP Zaton", issue: "Right anchor lost 10/03 in Port Kelang; RITA performance issues with main engine; off-spec bunker arbitration", sev: "high" },
+      { ship: "Zagreb", issue: "Fuel pipe leak; hydraulic hatch cover issues post-drydock; engine control system freeze", sev: "med" },
+      { ship: "Miho Pracat", issue: "Mooring winch failed; stern tube emulsion; hatch cover hydraulic leaks \u2013 all for DD", sev: "med" },
+      { ship: "AP Revelin", issue: "BWTS ballast drying not possible; tank level sensors need full overhaul in DD", sev: "med" },
+      { ship: "AP Dubrava", issue: "New gearbox installed; bridge window broken; BWTS parts delayed ~1 month", sev: "med" }
+    ]
+  },
+  {
+    title: "PSC & Class Status",
+    type: "psc",
+    items: [
+      { ship: "AP Argosy", detail: "PSC Taboneo 09/03 \u2013 0 deficiencies. Now Standard Risk, window opens 09/08/2026." },
+      { ship: "AP Dubrava", detail: "Standard Risk Ship. Hull damage verified by class, ST valid until 11/04/2026." },
+      { ship: "AP Jadran", detail: "Standard Risk Ship. Window opens 05/06/2026." },
+      { ship: "AP Kupari", detail: "Not in window but preparing for possible PSC Rotterdam (vessel >15yrs)." },
+      { ship: "AP Lapad", detail: "HR Ship Priority I \u2013 window open. Preparing for PSC Singapore." },
+      { ship: "AP Revelin", detail: "Standard Risk Priority I. Certain PSC in China (~01/04). Last Tokyo MoU PSC was 2018." },
+      { ship: "AP Zaton", detail: "HR Ship Priority II. Window opened 05/03. Annual class survey planned Bintulu." },
+      { ship: "Zagreb", detail: "HR Ship Priority II. PSC window open since 25/02/2026." }
+    ]
+  },
+  {
+    title: "Crew Changes & Inspections",
+    type: "crew",
+    items: [
+      { ship: "AP Astarea", detail: "Ch.Off & Ch.Eng requested relief from Jubail." },
+      { ship: "AP Argosy", detail: "Master contract expired 16/03. Capt. \u010ciz planned. Relief attempt in Mariveles." },
+      { ship: "AP Dubrovnik", detail: "Master & Ch.Off contracts expire 09/04. Relief requested from Rotterdam." },
+      { ship: "AP Revelin", detail: "Ch.Off, Ch.Eng relief in discharge port. Master change during DD (D. Palun\u010di\u0107)." },
+      { ship: "Miho Pracat", detail: "Master & Ch.Off relief in Singapore. New Master: P. Sr\u0161en, new Ch.Off: G. Erceg." },
+      { ship: "Zagreb", detail: "Ch.Off relief from India (health). Master, Ch.Eng, 2nd Eng planned mid/end April." }
+    ]
+  },
+  {
+    title: "Newbuildings",
+    type: "newbuild",
+    items: [
+      { name: "AP Imperial (HT64-362)", steel: "17/03/2025", keel: "02/12/2025", launch: "21/03/2026", delivery: "31/05/2026", highlight: true },
+      { name: "AP Petka (HT64-363)", steel: "01/04/2025", keel: "18/12/2025", launch: "20/04/2026", delivery: "31/07/2026", highlight: false },
+      { name: "AP Sveti Vlaho (HT64-364)", steel: "12/11/2025", keel: "24/06/2026", launch: "28/08/2026", delivery: "20/10/2026", highlight: false }
+    ],
+    note: "AP Imperial launch expected 21/03 \u2013 transfer to JiuSheng for outfitting confirmed."
+  }
+];
+
+const st = { ok: { bg: "#dcfce7", text: "#166534", label: "On Track" }, warn: { bg: "#fef9c3", text: "#854d0e", label: "Attention" } };
+const sev = { high: { bg: "#fecaca", text: "#991b1b" }, med: { bg: "#fed7aa", text: "#9a3412" } };
+
+let current = 0;
+
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function render() {
+  const s = slides[current];
+  const el = document.getElementById("slide");
+  const counter = document.getElementById("counter");
+  counter.textContent = "Slide " + (current + 1) + " / " + slides.length;
+
+  // Dots
+  const dots = document.getElementById("dots");
+  dots.innerHTML = slides.map((_, j) =>
+    '<div class="dot' + (j === current ? ' active' : '') + '" onclick="jump(' + j + ')"></div>'
+  ).join("");
+
+  // Buttons
+  document.getElementById("prevBtn").disabled = current === 0;
+  document.getElementById("nextBtn").disabled = current === slides.length - 1;
+
+  let html = "";
+
+  if (s.type === "cover") {
+    html = '<div class="cover">' +
+      '<div class="tag">WEEKLY FLEET STATUS</div>' +
+      '<h1>' + esc(s.title) + '</h1>' +
+      '<div class="sub">' + esc(s.subtitle) + '</div>' +
+      '<div class="meta">12 vessels in operation &middot; 3 newbuildings</div>' +
+      '</div>';
+  }
+
+  if (s.type === "overview") {
+    html = '<h2>' + esc(s.title) + '</h2><div class="grid2">';
+    s.data.forEach(function(v) {
+      html += '<div class="card" style="border-left:3px solid ' + st[v.status].text + '">' +
+        '<div class="top"><span class="name">' + esc(v.name) + '</span>' +
+        '<span class="badge" style="background:' + st[v.status].bg + ';color:' + st[v.status].text + '">' + st[v.status].label + '</span></div>' +
+        '<div class="loc">' + esc(v.loc) + '</div>' +
+        '<div class="note">' + esc(v.note) + '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  if (s.type === "issues") {
+    html = '<h2>' + esc(s.title) + '</h2>';
+    s.items.forEach(function(it) {
+      html += '<div class="issue" style="border-left:3px solid ' + sev[it.sev].text + '">' +
+        '<div class="row"><span class="sev" style="background:' + sev[it.sev].bg + ';color:' + sev[it.sev].text + '">' + it.sev.toUpperCase() + '</span>' +
+        '<span class="ship">' + esc(it.ship) + '</span></div>' +
+        '<p>' + esc(it.issue) + '</p></div>';
+    });
+  }
+
+  if (s.type === "psc" || s.type === "crew") {
+    html = '<h2>' + esc(s.title) + '</h2>';
+    s.items.forEach(function(it) {
+      html += '<div class="list-item"><span class="ship">' + esc(it.ship) + '</span>' +
+        '<p>' + esc(it.detail) + '</p></div>';
+    });
+  }
+
+  if (s.type === "newbuild") {
+    html = '<h2>' + esc(s.title) + '</h2>' +
+      '<table><thead><tr><th>Vessel</th><th>Steel Cut</th><th>Keel Laid</th><th>Launch</th><th>Delivery</th></tr></thead><tbody>';
+    s.items.forEach(function(it) {
+      html += '<tr' + (it.highlight ? ' class="highlight-row"' : '') + '>' +
+        '<td class="vessel">' + esc(it.name) + (it.highlight ? '<span class="this-week">THIS WEEK</span>' : '') + '</td>' +
+        '<td>' + esc(it.steel) + '</td><td>' + esc(it.keel) + '</td>' +
+        '<td>' + esc(it.launch) + '</td><td>' + esc(it.delivery) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    if (s.note) {
+      html += '<p class="nb-note">\u2693 ' + esc(s.note) + '</p>';
+    }
+  }
+
+  el.innerHTML = html;
+}
+
+function go(dir) {
+  current = Math.max(0, Math.min(slides.length - 1, current + dir));
+  render();
+}
+
+function jump(idx) {
+  current = idx;
+  render();
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "ArrowLeft") go(-1);
+  if (e.key === "ArrowRight") go(1);
+});
+
+render();
+</script>
+</body>
+</html>
